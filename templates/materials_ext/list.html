@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}المواد (الموسعة){% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="fas fa-cubes ms-2"></i> المواد والوحدات والأنواع والتالف</h3>
+  <a href="{{ url_for('materials_ext.add_material_ext') }}" class="btn btn-primary"><i class="fas fa-plus"></i> مادة جديدة</a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>المادة</th><th>الوحدة الأساسية</th><th>الوحدات الإضافية</th>
+        <th>الأنواع</th><th>التالف (الإجمالي)</th><th>الإجراءات</th>
+      </tr></thead>
+      <tbody>
+        {% for m in items %}
+        <tr>
+          <td><strong>{{ m.name_ar }}</strong><div class="small text-muted">{{ m.cur_code or '-' }}</div></td>
+          <td>{{ m.default_unit }}</td>
+          <td>
+            {% set us = units_map.get(m.id, []) %}
+            {% for u in us %}
+              <span class="badge bg-secondary">{{ u.unit_name }}{% if u.is_default %} (افتراضية){% endif %}</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% set ts = types_map.get(m.id, []) %}
+            {% if ts %}
+              {% for t in ts %}
+                <span class="badge bg-info text-dark">{{ t.name_ar }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small">لا توجد</span>
+            {% endif %}
+          </td>
+          <td>
+            {% set total = namespace(v=0) %}
+            {% for k,qty in damaged_summary.items() %}
+              {% if k[1] == m.id %}{% set total.v = total.v + qty %}{% endif %}
+            {% endfor %}
+            {% if total.v > 0 %}
+              <span class="badge bg-danger">{{ '%0.2f'|format(total.v) }}</span>
+            {% else %}
+              <span class="text-muted small">-</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('materials_ext.edit_material_ext', mid=m.id) }}" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-edit"></i> تعديل/إضافة أنواع ووحدات
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

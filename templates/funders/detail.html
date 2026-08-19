@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="page-title mb-0"><i class="bi bi-bank me-2"></i>{{ item.name }}</h4>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('finance.edit_funder', fid=item.id) }}"><i class="bi bi-pencil me-1"></i>تعديل</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cash-stack me-1"></i>تسجيل تمويل جديد (يُضاف تلقائياً لميزانية المشروع)</h6>
+  <form method="post" action="{{ url_for('finance.add_funder_deposit', fid=item.id) }}" class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label">المشروع *</label>
+      <select class="form-select" name="project_id" required>
+        <option value="">— اختر —</option>
+        {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2"><label class="form-label">المبلغ *</label>
+      <input type="number" step="any" class="form-control" name="amount" required></div>
+    <div class="col-md-2"><label class="form-label">العملة</label>
+      <select class="form-select" name="currency_id">
+        {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3"><label class="form-label">ملاحظة</label>
+      <input class="form-control" name="note"></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> تسجيل</button></div>
+  </form>
+</div>
+
+<div class="card p-3">
+  <h6 class="fw-bold mb-3"><i class="bi bi-list-ul me-1"></i>سجل التمويلات</h6>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>#</th><th>المشروع</th><th>المبلغ الأصلي</th><th>سعر الصرف</th><th>المعادل المحلي</th><th>الملاحظة</th><th>التاريخ</th></tr></thead>
+    <tbody>
+    {% for d in deposits %}
+      <tr>
+        <td>{{ d.id }}</td><td class="fw-semibold">{{ d.project_name }}</td>
+        <td>{{ money(d.amount) }} <small class="text-secondary">{{ d.cur_code }}</small></td>
+        <td>{{ d.exchange_rate }}</td>
+        <td class="fw-semibold text-success">{{ money(d.amount_local) }}</td>
+        <td class="text-secondary small">{{ d.note or '—' }}</td>
+        <td>{{ d.created_at.strftime('%Y-%m-%d') if d.created_at else '' }}</td>
+      </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-secondary py-3">لا توجد تمويلات بعد</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

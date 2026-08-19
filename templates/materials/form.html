@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مادة' if item else 'مادة جديدة' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:760px">
+  <h5 class="page-title mb-4"><i class="bi bi-box-seam me-2"></i>{{ 'تعديل المادة' if item else 'إضافة مادة جديدة' }}</h5>
+  <form method="post" action="{{ url_for('catalog.edit_material', mid=item.id) if item else url_for('catalog.add_material') }}">
+    <div class="mb-3"><label class="form-label">اسم المادة *</label>
+      <input class="form-control" name="name_ar" required value="{{ item.name_ar if item else '' }}"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4"><label class="form-label">وحدة القياس الأساسية *</label>
+        <select class="form-select" name="unit_id" required>
+          {% for u in units %}<option value="{{ u.id }}" {{ 'selected' if item and item.unit_id==u.id }}>{{ u.name_ar }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">السعر للوحدة</label>
+        <input type="number" step="any" class="form-control" name="price_per_unit" value="{{ item.price_per_unit if item else 0 }}"></div>
+      <div class="col-md-4"><label class="form-label">عملة السعر</label>
+        <select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if item and item.currency_id==c.id }}>{{ c.code }} - {{ c.name_ar }}</option>{% endfor %}
+        </select></div>
+    </div>
+
+    <div class="form-check form-switch mb-3">
+      <input class="form-check-input" type="checkbox" name="has_damage" id="has_damage" value="1"
+             {{ 'checked' if (item and item.has_damage) or not item }}>
+      <label class="form-check-label" for="has_damage"><i class="bi bi-exclamation-triangle text-warning me-1"></i>تفعيل قسم التالف لهذه المادة (يتوفر في كل المخازن)</label>
+    </div>
+
+    <hr>
+    <h6 class="fw-bold text-primary mb-2"><i class="bi bi-diagram-3 me-1"></i>الأنواع الفرعية للمادة</h6>
+    <p class="text-secondary small">مثال: خشب كرد، خشب ألواح، خشب مرابيع — لكل نوع قسم تالف خاص به.</p>
+    <div id="types-box">
+      {% for t in types %}
+      <div class="input-group mb-1"><input class="form-control" name="type_name" value="{{ t.name_ar }}">
+        <button type="button" class="btn btn-outline-danger bi bi-x" onclick="this.parentElement.remove()"></button></div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addType()"><i class="bi bi-plus-lg me-1"></i>إضافة نوع</button>
+
+    <hr>
+    <h6 class="fw-bold text-primary mb-2"><i class="bi bi-rulers me-1"></i>وحدات قياس إضافية (بالإضافة للوحدة الأساسية)</h6>
+    <p class="text-secondary small">مثال: قطعة، متر، كيلو، لتر.</p>
+    <div class="row g-2 mb-2">
+      {% for u in units %}
+      {% set is_checked = (item and item.unit_id==u.id) or (mat_units and u.id in mat_units|map(attribute='unit_id')|list) %}
+      {% if not is_checked %}
+      <div class="col-md-4"><div class="form-check">
+        <input class="form-check-input" type="checkbox" name="extra_unit" value="{{ u.id }}" id="uu{{ u.id }}">
+        <label class="form-check-label" for="uu{{ u.id }}">{{ u.name_ar }}</label>
+      </div></div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% if mat_units %}
+    <span class="text-secondary small">الوحدات الأساسية والمرتبطة حالياً:
+      {% for mu in mat_units %}<span class="type-chip">{{ mu.unit_name }}</span>{% endfor %}
+    </span>
+    {% endif %}
+    <div class="mt-4">
+      <button class="btn btn-primary px-4">حفظ</button>
+      <a class="btn btn-light" href="{{ url_for('catalog.list_materials') }}">إلغاء</a>
+    </div>
+  </form>
+</div>
+<script>
+function addType(){
+  const b = document.getElementById('types-box');
+  const d = document.createElement('div');
+  d.className = 'input-group mb-1';
+  d.innerHTML = '<input class="form-control" name="type_name" placeholder="اسم النوع الفرعي">' +
+    '<button type="button" class="btn btn-outline-danger bi bi-x" onclick="this.parentElement.remove()"></button>';
+  b.appendChild(d);
+}
+</script>
+{% endblock %}

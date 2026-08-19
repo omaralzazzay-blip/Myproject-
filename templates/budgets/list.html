@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}الميزانيات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-wallet2 me-2"></i>الميزانيات ورأس المال</h4>
+  {% if is_admin %}<a class="btn btn-sm btn-primary" href="{{ url_for('finance.add_budget') }}"><i class="bi bi-plus-lg me-1"></i>إضافة ميزانية</a>{% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#1e3a5f,#2c5282)">
+    <span>رأس مال المالك</span><h4 class="mb-0 mt-1 small">{{ money(total_map.get('owner',0)) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#0ea5a4,#0b8c8b)">
+    <span>ميزانيات المشاريع</span><h4 class="mb-0 mt-1 small">{{ money(total_map.get('project',0)) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#d97706,#b45309)">
+    <span>ميزانيات المراحل</span><h4 class="mb-0 mt-1 small">{{ money(total_map.get('phase',0)) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <span>الإجمالي</span><h4 class="mb-0 mt-1 small">{{ money(total_all) }}</h4></div></div>
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>المستوى</th><th>المرجع</th><th>المصدر</th><th>المبلغ الأصلي</th><th>سعر الصرف</th><th>المعادل المحلي</th><th>ملاحظة</th></tr></thead>
+    <tbody>
+    {% for b in items %}
+      <tr>
+        <td>{% if b.level=='owner' %}<span class="badge bg-dark">مالك</span>
+          {% elif b.level=='project' %}<span class="badge bg-primary">مشروع</span>
+          {% else %}<span class="badge bg-warning text-dark">مرحلة</span>{% endif %}</td>
+        <td>{{ b.phase_name or b.project_name or '—' }}</td>
+        <td>{{ b.source or '—' }}</td>
+        <td>{{ money(b.amount) }} <small class="text-secondary">{{ b.cur_code }}</small></td>
+        <td>{{ b.exchange_rate }}</td>
+        <td class="fw-semibold text-success">{{ money(b.amount_local) }}</td>
+        <td class="text-secondary small">{{ b.note or '' }}</td>
+      </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-secondary py-4">لا توجد ميزانيات</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

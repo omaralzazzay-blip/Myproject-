@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}سجل العمال{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-people me-2"></i>سجل العمال</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('workers.list_workers') }}">الكل</a>
+    <a class="btn btn-sm btn-outline-success" href="{{ url_for('workers.list_workers', status='active') }}">نشطون</a>
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('workers.list_workers', status='stopped') }}">موقوفون</a>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('workers.add_worker') }}"><i class="bi bi-person-plus me-1"></i>عامل جديد</a>
+  </div>
+</div>
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>العامل</th><th>النوع</th><th>المرحلة / المشروع</th><th>الأجر اليومي</th><th>أيام الدوام</th>
+      <th>الخصومات</th><th>السحوبات</th><th>الحالة</th><th class="text-end">إجراءات</th></tr></thead>
+    <tbody>
+    {% for w in items %}
+      <tr>
+        <td class="fw-semibold"><a class="text-decoration-none" href="{{ url_for('workers.worker_detail', wid=w.id) }}"><i class="bi bi-person me-1"></i>{{ w.name }}</a>
+          {% if w.phone %}<div class="small text-secondary">{{ w.phone }}</div>{% endif %}</td>
+        <td><span class="badge-soft">{{ w.type_name }}</span></td>
+        <td><div>{{ w.phase_name }}</div><small class="text-secondary">{{ w.project_name }}</small></td>
+        <td>{{ money(w.wage_per_day) }} <small class="text-secondary">{{ w.cur_code }}</small></td>
+        <td>{{ w.days_n }}</td>
+        <td class="text-danger">{{ money(w.total_ded) }}</td>
+        <td class="text-warning">{{ money(w.total_wd) }}</td>
+        <td>{% if w.status=='active' %}<span class="badge bg-success">نشط</span>{% else %}<span class="badge bg-secondary">موقوف</span>{% endif %}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('workers.worker_detail', wid=w.id) }}"><i class="bi bi-calculator"></i></a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('workers.edit_worker', wid=w.id) }}"><i class="bi bi-pencil"></i></a>
+          {% if is_admin %}
+          <form class="d-inline" method="post" action="{{ url_for('workers.delete_worker', wid=w.id) }}" onsubmit="return confirm('حذف العامل وكل سجلاته؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="9" class="text-center text-secondary py-4">لا يوجد عمال — أضف أول عامل</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

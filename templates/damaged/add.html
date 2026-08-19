@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل تالف{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-box-open ms-2 text-danger"></i> تسجيل تالف جديد في المخزن: <span class="text-primary">{{ wh.name }}</span></h3>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="POST" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">المادة *</label>
+        <select name="material_id" id="material_id" class="form-select" required>
+          <option value="">-- اختر --</option>
+          {% for m in materials %}<option value="{{ m.id }}">{{ m.name_ar }} ({{ m.unit_name }})</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">النوع (اختياري)</label>
+        <select name="material_type_id" class="form-select">
+          <option value="">-- بدون نوع --</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">الوحدة *</label>
+        <select name="unit_id" class="form-select" required></select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">الكمية *</label>
+        <input type="number" step="0.001" min="0.001" name="quantity" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">تاريخ التالف</label>
+        <input type="date" name="damaged_date" value="{{ today_str }}" class="form-control">
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">السبب</label>
+        <input name="reason" class="form-control" placeholder="مثلاً: كسر أثناء النقل، عيب في الصنع، سوء تخزين...">
+      </div>
+      <div class="col-12">
+        <button class="btn btn-danger"><i class="bi bi-save"></i> تسجيل التالف وخصمه من المخزن</button>
+        <a href="{{ url_for('materials_ext.damaged_warehouse_index', wid=wh.id) }}" class="btn btn-secondary">رجوع</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+const mUnits = {{ m_units_json|default('{}')|safe }};
+const mTypes = {{ m_types_json|default('{}')|safe }};
+const selMat = document.getElementById('material_id');
+selMat.addEventListener('change', () => {
+  const id = selMat.value;
+  const uSel = document.querySelector('select[name="unit_id"]');
+  const tSel = document.querySelector('select[name="material_type_id"]');
+  uSel.innerHTML = '';
+  if (id && mUnits[id]) {
+    mUnits[id].forEach(u => {
+      const o = document.createElement('option'); o.value = u.id; o.textContent = u.name + (u.is_default ? ' (افتراضية)' : '');
+      uSel.appendChild(o);
+    });
+  }
+  tSel.innerHTML = '<option value="">-- بدون نوع --</option>';
+  if (id && mTypes[id]) {
+    mTypes[id].forEach(t => {
+      const o = document.createElement('option'); o.value = t.id; o.textContent = t.name;
+      tSel.appendChild(o);
+    });
+  }
+});
+</script>
+{% endblock %}

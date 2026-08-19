@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}الفواتير والمستندات والمخططات{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-paperclip me-2"></i>الفواتير والمستندات والمخططات</h4>
+  <div class="d-flex gap-2">
+    <form class="d-flex gap-1" method="get" action="{{ url_for('attachments.list_attachments') }}">
+      <select class="form-select form-select-sm" name="type" style="max-width:180px">
+        <option value="">كل الأنواع</option>
+        {% for k, v in ref_label.items() %}<option value="{{ k }}" {{ 'selected' if rtype==k }}>{{ v }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-sm btn-primary">تصفية</button>
+    </form>
+    <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#uploadBox"><i class="bi bi-upload me-1"></i>رفع ملف</button>
+  </div>
+</div>
+
+<div class="collapse mb-3" id="uploadBox">
+  <div class="card p-3">
+    <h6 class="fw-bold text-primary mb-3"><i class="bi bi-upload me-1"></i>رفع مرفق (JPG / PNG / PDF / DWG / DOC / XLS...)</h6>
+    <form method="post" action="{{ url_for('attachments.upload_attachment') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
+      <div class="col-md-3"><label class="form-label">الملف *</label>
+        <input type="file" class="form-control" name="file" required></div>
+      <div class="col-md-2"><label class="form-label">المشروع *</label>
+        <select class="form-select" name="project_id" required>
+          <option value="">— اختر —</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-2"><label class="form-label">نوع المرفق</label>
+        <select class="form-select" name="ref_type">
+          {% for k, v in ref_label.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-3"><label class="form-label">ملاحظة</label>
+        <input class="form-control" name="note" placeholder="فاتورة / مخطط معماري..."></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100">رفع</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>الملف</th><th>النوع</th><th>المشروع</th><th>الحجم</th><th>ملاحظة</th><th>بواسطة</th><th>التاريخ</th><th class="text-end">إجراءات</th></tr></thead>
+    <tbody>
+    {% for a in items %}
+      <tr>
+        <td class="fw-semibold"><i class="bi bi-file-earmark me-1"></i>{{ a.file_name }}</td>
+        <td><span class="badge-soft">{{ ref_label.get(a.ref_type, a.ref_type) }}</span></td>
+        <td>{{ a.project_name }}</td>
+        <td class="small">{{ (a.file_size or 0) // 1024 }} KB</td>
+        <td class="small text-secondary">{{ a.note or '—' }}</td>
+        <td class="small text-secondary">{{ a.by_name or '—' }}</td>
+        <td class="small">{{ a.created_at.strftime('%Y-%m-%d') if a.created_at else '' }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('attachments.download_attachment', aid=a.id) }}"><i class="bi bi-download"></i></a>
+          {% if is_admin %}
+          <form class="d-inline" method="post" action="{{ url_for('attachments.delete_attachment', aid=a.id) }}" onsubmit="return confirm('حذف المرفق؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="text-center text-secondary py-4">لا توجد مرفقات — ارفع فاتورة أو مخططاً</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

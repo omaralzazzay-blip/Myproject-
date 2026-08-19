@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}قيد صرف #{{ item.id }}{% endblock %}
+{% block content %}
+<h4 class="page-title mb-3"><i class="bi bi-receipt me-2"></i>قيد مصروف / مسحوبات #{{ item.id }}</h4>
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card p-3 mb-3">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-list-ul me-1"></i>تفاصيل القيد</h6>
+      <table class="table table-sm mb-0">
+        <tbody>
+          <tr><th class="w-25">التاريخ</th><td>{{ item.issue_date }}</td></tr>
+          <tr><th>المشروع</th><td>{{ item.project_name }}</td></tr>
+          <tr><th>نوع القيد</th><td>{% if item.issue_kind=='material' %}<span class="badge bg-info">صرف مواد</span>{% else %}<span class="badge bg-warning text-dark">نقدي</span>{% endif %}</td></tr>
+          <tr><th>المستفيد</th><td><span class="badge-soft">{{ 'عامل' if item.beneficiary_type=='worker' else 'مشرف' }}</span> <strong>{{ item.worker_name or item.supervisor_name }}</strong></td></tr>
+          {% if item.issue_kind=='material' %}
+          <tr><th>المخزن</th><td>{{ item.warehouse_name or '—' }}</td></tr>
+          <tr><th>المادة</th><td>{{ item.material_name or '—' }}{% if item.type_name %} <span class="type-chip">{{ item.type_name }}</span>{% endif %}</td></tr>
+          <tr><th>الكمية</th><td>{{ money(item.quantity) }} {{ item.unit_name or '' }}</td></tr>
+          {% endif %}
+          <tr><th>البيان</th><td>{{ item.description or '—' }}</td></tr>
+          <tr><th>المبلغ (محلي)</th><td class="fw-bold text-danger">{{ money(item.total_local) }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card p-3">
+      <h6 class="fw-bold text-success mb-3"><i class="bi bi-journal-text me-1"></i>الحساب المخصوم منه</h6>
+      {% if acc %}
+        <p class="mb-1">{{ acc.name }}</p>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('accounts.account_detail', aid=acc.id) }}"><i class="bi bi-eye me-1"></i>عرض كشف الحساب</a>
+      {% else %}<span class="text-secondary small">لا يوجد حساب مرتبط.</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

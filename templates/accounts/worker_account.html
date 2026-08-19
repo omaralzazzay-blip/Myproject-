@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}كشف حساب العامل {{ w.name }}{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-person ms-2"></i> كشف حساب: <strong>{{ w.name }}</strong>
+  <small class="text-muted">({{ w.project_name }} - {{ w.phase_name }})</small></h3>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card border-success">
+    <div class="card-body"><small>دائن (له)</small><h4>{{ money(credits) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card border-danger">
+    <div class="card-body"><small>مدين (عليه)</small><h4>{{ money(debits) }}</h4></div></div></div>
+  <div class="col-md-4"><div class="card border-primary">
+    <div class="card-body"><small>الرصيد الصافي</small>
+      <h4 class="mb-0">{% if balance > 0 %}<span class="text-success">{{ money(balance) }} لصالحة</span>
+      {% elif balance < 0 %}<span class="text-danger">{{ money(-balance) }} عليه</span>
+      {% else %}<span>0</span>{% endif %}</h4></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white"><i class="bi bi-plus-circle"></i> إضافة حركة (مدين/دائن)</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('accounts.add_worker_move', wid=w.id) }}" class="row g-2">
+          <div class="col-6">
+            <label class="form-label">نوع الحركة</label>
+            <select name="move_type" class="form-select" required>
+              <option value="debit">مدين (عليه/خصم)</option>
+              <option value="credit">دائن (له/دفعة)</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">التاريخ</label>
+            <input type="date" name="move_date" class="form-control" value="{{ today }}">
+          </div>
+          <div class="col-6">
+            <label class="form-label">المبلغ</label>
+            <input type="number" step="0.001" min="0.001" name="amount" class="form-control" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label">العملة</label>
+            <select name="currency_id" class="form-select">
+              {% for c in currencies %}<option value="{{ c.id }}">{{ c.code }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">المرجع</label>
+            <select name="reference_type" class="form-select">
+              <option value="advance">سلفة/سحب</option>
+              <option value="deduction">خصم</option>
+              <option value="payment">دفعة من المالك</option>
+              <option value="manual">يدوي</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">ملاحظة</label>
+            <input name="note" class="form-control">
+          </div>
+          <div class="col-12"><button class="btn btn-success"><i class="bi bi-save"></i> تسجيل الحركة</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% if is_admin %}
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning"><i class="bi bi-cash"></i> تعديل الرصيد الافتتاحي</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('accounts.set_worker_opening', wid=w.id) }}" class="row g-2">
+          <div class="col-6">
+            <label class="form-label">الرصيد الافتتاحي</label>
+            <input type="number" step="0.001" name="opening_balance" class="form-control" value="0">
+          </div>
+          <div class="col-6">
+            <label class="form-label">ملاحظات</label>
+            <input name="notes" class="form-control">
+          </div>
+          <div class="col-12"><button class="btn btn-warning"><i class="bi bi-save"></i> تحديث</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<h5 class="mt-4 mb-2"><i class="bi bi-list-ul"></i> سجل الحركات</h5>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead class="table-light"><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>العملة</th><th>المرجع</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        {% for m in moves %}
+        <tr>
+          <td>{{ m.move_date }}</td>
+          <td>{% if m.move_type=='debit'%} مدين <i class="bi bi-arrow-down text-danger"></i>{% else %} دائن <i class="bi bi-arrow-up text-success"></i>{% endif %}</td>
+          <td>{{ money(m.amount) }}</td>
+          <td>{{ m.cur_code }}</td>
+          <td>{{ m.reference_type or '-' }}</td>
+          <td>{{ m.note or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-muted">لا توجد حركات</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

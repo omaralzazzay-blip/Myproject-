@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}المخازن والأرصدة والتالف{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="page-title mb-0"><i class="bi bi-archive me-2"></i>المخازن والأرصدة والتالف</h4>
+  <a class="btn btn-sm btn-primary" href="{{ url_for('projects.add_warehouse') }}"><i class="bi bi-plus-lg me-1"></i>مخزن جديد</a>
+</div>
+
+<div class="row g-3 mb-3">
+  {% for w in warehouses %}
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100 p-3">
+      <div class="d-flex justify-content-between">
+        <h6 class="fw-bold text-primary mb-1"><i class="bi bi-archive me-1"></i>{{ w.name }}</h6>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('stock.warehouse_view', wid=w.id) }}">دخول</a>
+      </div>
+      <span class="text-secondary small">{{ w.project_name }} • {{ w.location or '—' }}</span>
+      <div class="mt-2 small text-secondary">
+        <i class="bi bi-person me-1"></i>{{ w.manager_name or 'بدون مسؤول' }} •
+        <i class="bi bi-arrow-left-right me-1"></i>{{ w.moves_n }} حركة •
+        {% if w.damage_n %}<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ w.damage_n }} تالف</span>
+        {% else %}<span class="text-success">لا تالف</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}<div class="col-12"><div class="card p-5 text-center text-secondary"><i class="bi bi-archive fs-1"></i><p class="mt-2">لا توجد مخازن</p></div></div>{% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-8">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold mb-3"><i class="bi bi-boxes me-1"></i>أرصدة المواد الحالية (مادة / نوع / وحدة)</h6>
+      <div class="table-responsive" style="max-height:400px">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>المادة</th><th>النوع</th><th>الوحدة</th><th>المخزن</th><th class="text-end">الرصيد الحالي</th></tr></thead>
+        <tbody>
+        {% for b in balances %}
+          <tr>
+            <td class="fw-semibold">{{ b.material_name }}</td>
+            <td>{% if b.type_name %}<span class="type-chip">{{ b.type_name }}</span>{% else %}—{% endif %}</td>
+            <td>{{ b.unit_name }}</td>
+            <td>{{ b.warehouse_name }}</td>
+            <td class="text-end">
+              {% if b.balance <= 20 %}<span class="badge bg-danger">{{ money(b.balance) }} {{ b.unit_name }}</span>
+              {% elif b.balance <= 50 %}<span class="badge bg-warning text-dark">{{ money(b.balance) }} {{ b.unit_name }}</span>
+              {% else %}<span class="badge bg-success">{{ money(b.balance) }} {{ b.unit_name }}</span>{% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary py-4">لا توجد حركات مخزون بعد</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3 h-100 mb-3">
+      <h6 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle me-1"></i>مواد قاربت على النفاد (≤ 20)</h6>
+      {% if low %}
+      <table class="table table-sm mb-0">
+        <tbody>{% for s in low %}
+          <tr><td>{{ s.material_name }} <span class="text-secondary small">/ {{ s.unit_name }}</span></td>
+            <td class="text-end"><span class="badge bg-danger">{{ money(s.balance) }} {{ s.unit_name }}</span></td></tr>
+        {% endfor %}</tbody>
+      </table>
+      {% else %}<span class="text-success small"><i class="bi bi-check-circle me-1"></i>لا توجد مواد منخفضة</span>{% endif %}
+    </div>
+    <div class="card p-3">
+      <h6 class="fw-bold text-warning mb-3"><i class="bi bi-box2-heart me-1"></i>إجمالي التالف حسب المخزن (كل المشاريع في نطاقك)</h6>
+      {% if damages %}
+      <table class="table table-sm mb-0">
+        <thead><tr><th>المخزن / المادة</th><th class="text-end">الكمية</th><th class="text-end">القيمة (محلي)</th></tr></thead>
+        <tbody>{% for d in damages %}
+          <tr><td>{{ d.material_name }}{% if d.type_name %} <span class="type-chip">{{ d.type_name }}</span>{% endif %}
+            <div class="small text-secondary">{{ d.warehouse_name }}</div></td>
+          <td class="text-end">{{ money(d.qty) }} {{ d.unit_name }}</td>
+          <td class="text-end text-warning fw-semibold">{{ money(d.val) }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+      {% else %}<span class="text-secondary small">لا توجد توالف مسجلة</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

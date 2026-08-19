@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مخزن' if item else 'إضافة مخزن' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:640px">
+  <h5 class="page-title mb-4"><i class="bi bi-archive me-2"></i>{{ 'تعديل المخزن' if item else 'إضافة مخزن جديد' }}</h5>
+  <form method="post" action="{{ url_for('projects.edit_warehouse', wid=item.id) if item else url_for('projects.add_warehouse') }}">
+    {% if not item %}
+    <div class="mb-3"><label class="form-label">المشروع *</label>
+      <select class="form-select" name="project_id" required>
+        <option value="">— اختر المشروع —</option>
+        {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    <div class="mb-3"><label class="form-label">اسم المخزن *</label>
+      <input class="form-control" name="name" required value="{{ item.name if item else '' }}"></div>
+    <div class="mb-3"><label class="form-label">الموقع</label>
+      <input class="form-control" name="location" value="{{ item.location if item else '' }}"></div>
+    <div class="mb-3"><label class="form-label">المسؤول عن المخزن</label>
+      <input class="form-control" name="manager_name" value="{{ item.manager_name if item else '' }}"></div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    {% if item %}<a class="btn btn-light" href="{{ url_for('projects.view_project', pid=item.project_id) }}">إلغاء</a>{% endif %}
+  </form>
+</div>
+{% endblock %}

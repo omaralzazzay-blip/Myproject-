@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}تقرير التالف{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="page-title mb-0"><i class="bi bi-exclamation-triangle me-2"></i>تقرير التالف</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('reports.damaged_report', from=frm, to=to, export='pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+    <a class="btn btn-sm btn-outline-success" href="{{ url_for('reports.damaged_report', from=frm, to=to, export='xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <form class="row g-2 align-items-end" method="get" action="{{ url_for('reports.damaged_report') }}">
+    <div class="col-md-4"><label class="form-label">من</label>
+      <input type="date" class="form-control" name="from" value="{{ frm }}"></div>
+    <div class="col-md-4"><label class="form-label">إلى</label>
+      <input type="date" class="form-control" name="to" value="{{ to }}"></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
+  </form>
+</div>
+<div class="row g-2 mb-3">
+  <div class="col-md-6"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <span>إجمالي كمية التالف</span><h4 class="mb-0 mt-1">{{ money(totals.qty) }}</h4></div></div>
+  <div class="col-md-6"><div class="stat-card" style="background:linear-gradient(135deg,#b45309,#92400e)">
+    <span>إجمالي قيمة التالف (محلي)</span><h4 class="mb-0 mt-1">{{ money(totals.val) }}</h4></div></div>
+</div>
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-sm table-hover mb-0">
+    <thead><tr><th>التاريخ</th><th>المخزن</th><th>المادة</th><th>النوع الفرعي</th><th class="text-end">الكمية</th><th>الوحدة</th><th class="text-end">القيمة (محلي)</th><th>السبب</th><th>بواسطة</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.damage_date }}</td>
+        <td>{{ r.warehouse_name }}</td>
+        <td class="fw-semibold">{{ r.material_name }}</td>
+        <td>{% if r.type_name %}<span class="type-chip">{{ r.type_name }}</span>{% else %}—{% endif %}</td>
+        <td class="text-end">{{ money(r.quantity) }}</td>
+        <td>{{ r.unit_name }}</td>
+        <td class="text-end text-warning fw-semibold">{{ money(r.value_local) }}</td>
+        <td class="small text-secondary">{{ r.reason or '—' }}</td>
+        <td class="small text-secondary">{{ r.by_name or '—' }}</td>
+      </tr>
+    {% else %}<tr><td colspan="9" class="text-center text-secondary py-4">لا توجد توالف في هذه الفترة</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

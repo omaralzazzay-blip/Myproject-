@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل عملة' if item else 'عملة جديدة' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:560px">
+  <h5 class="page-title mb-4"><i class="bi bi-currency-exchange me-2"></i>{{ 'تعديل العملة' if item else 'إضافة عملة جديدة' }}</h5>
+  <form method="post" action="{{ url_for('catalog.edit_currency', cid=item.id) if item else url_for('catalog.add_currency') }}">
+    {% if item %}
+    <div class="mb-3"><label class="form-label">الرمز</label>
+      <input class="form-control" value="{{ item.code }}" disabled></div>
+    <div class="mb-3"><label class="form-label">سعر الصرف (مقابل العملة المحلية) *</label>
+      <input type="number" step="any" class="form-control" name="rate_to_local" required value="{{ item.rate_to_local }}">
+      <div class="form-text">مثال: 1 دولار = 2800 ريال → أدخل 2800</div></div>
+    {% else %}
+    <div class="mb-3"><label class="form-label">رمز العملة *</label>
+      <input class="form-control" name="code" placeholder="مثال: EUR" required></div>
+    <div class="mb-3"><label class="form-label">الاسم *</label>
+      <input class="form-control" name="name_ar" placeholder="مثال: يورو" required></div>
+    <div class="mb-3"><label class="form-label">سعر الصرف (مقابل العملة المحلية) *</label>
+      <input type="number" step="any" class="form-control" name="rate_to_local" required value="1">
+      <div class="form-text">كم وحدة محلية تساوي وحدة واحدة من هذه العملة</div></div>
+    {% endif %}
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('catalog.list_currencies') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

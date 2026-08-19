@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}لوحة المشرف - {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1">لوحة المشرف</h4>
+    <span class="text-secondary small">مرحباً، أنت مشرف على: <strong>{{ project.name if project else '—' }}</strong></span>
+  </div>
+  <div class="text-secondary small"><i class="bi bi-calendar3 me-1"></i>{{ today.strftime('%Y-%m-%d') }}</div>
+</div>
+
+{% if project %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#1e3a5f,#2c5282)">
+    <div class="d-flex justify-content-between"><span>مراحل المشروع</span><i class="bi bi-layers"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.phases }}</h3></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#0ea5a4,#0b8c8b)">
+    <div class="d-flex justify-content-between"><span>العمال النشطون</span><i class="bi bi-people"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.workers }}</h3></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <div class="d-flex justify-content-between"><span>الميزانية المرصودة (محلي)</span><i class="bi bi-wallet2"></i></div>
+    <h3 class="mb-0 mt-2">{{ money(budget) }}</h3></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <div class="d-flex justify-content-between"><span>منصرف (مصروفات + سحوبات)</span><i class="bi bi-graph-down-arrow"></i></div>
+    <h3 class="mb-0 mt-2">{{ money(expenses + withdrawals) }}</h3></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-layers me-1"></i> مراحل مشروعي</h6>
+      <table class="table table-hover mb-0">
+        <thead><tr><th>المرحلة</th><th>الحالة</th><th>البداية</th><th></th></tr></thead>
+        <tbody>
+        {% for ph in phases %}
+          <tr>
+            <td>{{ ph.name }}</td>
+            <td>
+              {% if ph.status=='active' %}<span class="badge bg-success">نشطة</span>
+              {% elif ph.status=='done' %}<span class="badge bg-secondary">منتهية</span>
+              {% else %}<span class="badge bg-warning text-dark">مخطط لها</span>{% endif %}
+            </td>
+            <td>{{ ph.start_date or '—' }}</td>
+            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('projects.view_project', pid=project.id) }}">تفاصيل</a></td>
+          </tr>
+        {% else %}<tr><td colspan="4" class="text-center text-secondary">لا توجد مراحل</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      <div class="mt-3 d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('workers.add_worker') }}" class="btn btn-sm btn-primary"><i class="bi bi-person-plus me-1"></i>إضافة عامل</a>
+        <a href="{{ url_for('finance.add_expense') }}" class="btn btn-sm btn-primary"><i class="bi bi-receipt me-1"></i>تسجيل مصروف</a>
+        <a href="{{ url_for('finance.add_withdrawal') }}" class="btn btn-sm btn-primary"><i class="bi bi-cash-coin me-1"></i>تسجيل سحب</a>
+        <a href="{{ url_for('projects.add_warehouse') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-square me-1"></i>إضافة مخزن</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-activity me-1"></i> آخر العمليات</h6>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>النوع</th><th>البيان</th><th>التاريخ</th><th class="text-end">المبلغ</th></tr></thead>
+        <tbody>
+        {% for r in recent %}
+          <tr>
+            <td>{% if r.kind=='مصروف' %}<span class="badge bg-danger">مصروف</span>{% else %}<span class="badge bg-warning text-dark">سحب</span>{% endif %}</td>
+            <td>{{ r.txt or '—' }}</td><td>{{ r.d }}</td>
+            <td class="text-end fw-semibold">{{ money(r.amt) }}</td>
+          </tr>
+        {% else %}<tr><td colspan="4" class="text-center text-secondary">لا توجد عمليات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card p-3">
+      <h6 class="fw-bold text-danger mb-0"><i class="bi bi-exclamation-triangle me-1"></i> تنبيهات المخزون في مشروعي</h6>
+      <p class="text-secondary small mb-2">المواد التي رصيدها 20 أو أقل</p>
+      {% if low_stock %}
+      <table class="table table-sm mb-0">
+        <thead><tr><th>المادة</th><th>المخزن</th><th class="text-end">الرصيد</th></tr></thead>
+        <tbody>{% for s in low_stock %}
+          <tr><td>{{ s.material_name }}</td><td>{{ s.warehouse_name }}</td>
+          <td class="text-end"><span class="badge bg-danger">{{ money(s.balance) }} {{ s.unit_name }}</span></td></tr>
+        {% endfor %}</tbody>
+      </table>
+      {% else %}<span class="text-secondary small">لا توجد مواد منخفضة — ممتاز.</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card p-5 text-center">
+  <i class="bi bi-person-x fs-1 text-warning"></i>
+  <h5 class="mt-3">لم يُربط حسابك بأي مشروع بعد</h5>
+  <p class="text-secondary">يرجى التواصل مع المدير لربط حسابك بمشروع معين حتى تتمكن من العمل.</p>
+</div>
+{% endif %}
+{% endblock %}

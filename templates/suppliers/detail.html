@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.name }} - المورد{% endblock %}
+{% block content %}
+<h4 class="page-title mb-3"><i class="bi bi-truck me-2"></i>{{ item.name }} {% if item.phone %}<small class="text-secondary">{{ item.phone }}</small>{% endif %}</h4>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-cash-stack me-1"></i>توريد مبالغ مالية للمشروع</h6>
+      <form method="post" action="{{ url_for('finance.add_supplier_money', sid=item.id) }}" class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label">المشروع *</label>
+          <select class="form-select" name="project_id" required>
+            <option value="">— اختر —</option>
+            {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+          </select></div>
+        <div class="col-md-3"><label class="form-label">المبلغ *</label>
+          <input type="number" step="any" class="form-control" name="amount" required></div>
+        <div class="col-md-3"><label class="form-label">العملة</label>
+          <select class="form-select" name="currency_id">
+            {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+          </select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">تسجيل</button></div>
+      </form>
+      <table class="table table-sm table-hover mt-3 mb-0">
+        <thead><tr><th>المشروع</th><th>المبلغ</th><th>المعادل المحلي</th><th>ملاحظة</th></tr></thead>
+        <tbody>
+        {% for m in money_records %}
+          <tr><td>{{ m.project_name }}</td><td>{{ money(m.amount) }} {{ m.cur_code }}</td>
+          <td class="text-success fw-semibold">{{ money(m.amount_local) }}</td><td class="small text-secondary">{{ m.note or '—' }}</td></tr>
+        {% else %}<tr><td colspan="4" class="text-center text-secondary">لا يوجد توريد مالي</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-box-seam me-1"></i>توريد مواد (يُدخل المادة للمخزن تلقائياً)</h6>
+      <form method="post" action="{{ url_for('finance.add_supplier_delivery', sid=item.id) }}" enctype="multipart/form-data" class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label">المخزن *</label>
+          <select class="form-select" name="warehouse_id" required>
+            <option value="">— اختر —</option>
+            {% for w in warehouses %}<option value="{{ w.id }}">{{ w.pname }} / {{ w.name }}</option>{% endfor %}
+          </select></div>
+        <div class="col-md-4"><label class="form-label">المادة *</label>
+          <select class="form-select" name="material_id" id="sup_mat" required onchange="fillSupTypes()">
+            <option value="">— اختر —</option>
+            {% for m in materials %}<option value="{{ m.id }}">{{ m.name_ar }} ({{ m.unit_name }})</option>{% endfor %}
+          </select></div>
+        <div class="col-md-4"><label class="form-label">النوع الفرعي</label>
+          <select class="form-select" name="material_type_id" id="sup_mt"><option value="">—</option></select></div>
+        <div class="col-md-2"><label class="form-label">الكمية *</label>
+          <input type="number" step="any" class="form-control" name="quantity" required></div>
+        <div class="col-md-2"><label class="form-label">سعر الوحدة</label>
+          <input type="number" step="any" class="form-control" name="price_per_unit" value="0"></div>
+        <div class="col-md-3"><label class="form-label">العملة</label>
+          <select class="form-select" name="currency_id">
+            {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+          </select></div>
+        <div class="col-md-7"><label class="form-label">ملاحظة</label>
+          <input class="form-control" name="note"></div>
+        <div class="col-md-3"><label class="form-label">فاتورة / مستند (JPG, PNG, PDF)</label>
+          <input type="file" class="form-control" name="invoice_file"></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">توريد</button></div>
+      </form>
+      <table class="table table-sm table-hover mt-3 mb-0">
+        <thead><tr><th>المادة/النوع</th><th>الكمية</th><th>المخزن</th><th>الإجمالي (محلي)</th></tr></thead>
+        <tbody>
+        {% for d in deliveries %}
+          <tr><td>{{ d.material_name }}{% if d.type_name %} <span class="type-chip">{{ d.type_name }}</span>{% endif %}</td><td>{{ d.quantity }} {{ d.unit_name }}</td>
+          <td>{{ d.warehouse_name }}</td><td class="fw-semibold">{{ money(d.total_local) }}</td></tr>
+        {% else %}<tr><td colspan="4" class="text-center text-secondary">لا توجد توريدات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+const SUP_TYPES = {{ material_types | tojson }};
+function fillSupTypes(){
+  const mid = document.getElementById('sup_mat').value;
+  const s = document.getElementById('sup_mt');
+  s.innerHTML = '<option value="">—</option>';
+  if(!mid) return;
+  SUP_TYPES.filter(t => t.material_id == mid).forEach(t =>
+    s.insertAdjacentHTML('beforeend', '<option value="' + t.id + '">' + t.name_ar + '</option>'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل ممول' if item else 'ممول جديد' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:600px">
+  <h5 class="page-title mb-4"><i class="bi bi-bank me-2"></i>{{ 'تعديل بيانات الممول' if item else 'إضافة ممول جديد' }}</h5>
+  <form method="post" action="{{ url_for('finance.edit_funder', fid=item.id) if item else url_for('finance.add_funder') }}">
+    <div class="mb-3"><label class="form-label">الاسم *</label>
+      <input class="form-control" name="name" required value="{{ item.name if item else '' }}"></div>
+    <div class="mb-3"><label class="form-label">رقم الهاتف</label>
+      <input class="form-control" name="phone" value="{{ item.phone if item else '' }}"></div>
+    <div class="mb-3"><label class="form-label">ملاحظات</label>
+      <textarea class="form-control" rows="3" name="notes">{{ item.notes if item else '' }}</textarea></div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('finance.list_funders') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

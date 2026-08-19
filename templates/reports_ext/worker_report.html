@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}تقرير العمال{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-people ms-2"></i> تقرير العمال - مخصص</h3>
+
+<form method="GET" class="card shadow-sm mb-4">
+  <div class="card-body row g-2">
+    <div class="col-md-3"><label>من</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+    <div class="col-md-3"><label>إلى</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+    <div class="col-md-4"><label>العامل</label>
+      <select name="worker_id" class="form-select">
+        <option value="">-- جميع العمال --</option>
+        {% for w in workers %}<option value="{{ w.id }}" {% if selected_wid==w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary"><i class="bi bi-funnel"></i> تطبيق</button></div>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي الأجر</small><h4>{{ money(totals.gross) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي الخصومات</small><h4 class="text-danger">{{ money(totals.deductions) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي السحوبات</small><h4 class="text-warning">{{ money(totals.withdrawals) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body"><small>الصافي</small><h4>{{ money(totals.net) }}</h4></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>المشروع</th><th>المرحلة</th><th>الاسم</th><th>النوع</th><th>أيام</th>
+        <th>الأجر</th><th>الخصومات</th><th>السحوبات</th><th>الصافي</th><th>رصيد الحساب</th>
+      </tr></thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td>{{ r.project_name }}</td><td>{{ r.phase_name }}</td>
+          <td><a href="{{ url_for('accounts.worker_account_view', wid=r.id) }}"><strong>{{ r.name }}</strong></a></td>
+          <td>{{ r.type_name }}</td>
+          <td>{{ r.days }}</td>
+          <td>{{ money(r.gross) }}</td>
+          <td class="text-danger">{{ money(r.deductions) }}</td>
+          <td class="text-warning">{{ money(r.withdrawals) }}</td>
+          <td class="fw-bold">{{ money(r.net) }}</td>
+          <td>
+            {% if r.balance>0 %}<span class="badge bg-success">{{ money(r.balance) }} دائن</span>
+            {% elif r.balance<0 %}<span class="badge bg-danger">{{ money(-r.balance) }} مدين</span>{% else %}0{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

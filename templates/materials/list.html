@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}المواد والأصناف{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-box-seam me-2"></i>المواد والأصناف</h4>
+  <div class="d-flex gap-2 flex-wrap">
+    <form method="post" action="{{ url_for('catalog.add_unit') }}" class="d-flex gap-1">
+      <input class="form-control form-control-sm" name="name_ar" placeholder="وحدة جديدة (مثال: كرتون)" required>
+      <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+    </form>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('catalog.add_material') }}"><i class="bi bi-plus-lg me-1"></i>مادة جديدة</a>
+  </div>
+</div>
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>المادة</th><th>الوحدة الأساسية</th><th>الأنواع الفرعية</th><th>وحدات إضافية</th><th>السعر</th><th>قسم التالف</th><th>تالف (كمية)</th><th class="text-end">إجراءات</th></tr></thead>
+    <tbody>
+    {% for m in items %}
+      <tr>
+        <td class="fw-semibold">{{ m.name_ar }}</td>
+        <td><span class="badge-soft">{{ m.unit_name }}</span></td>
+        <td>{% if m.types_n %}<span class="type-chip">{{ m.types_n }} نوع</span>{% else %}<span class="text-secondary small">—</span>{% endif %}</td>
+        <td>{% if m.units_n %}<span class="type-chip">{{ m.units_n }} وحدة</span>{% else %}<span class="text-secondary small">—</span>{% endif %}</td>
+        <td>{{ m.price_per_unit }} {{ m.cur_code or '' }}</td>
+        <td>{% if m.has_damage %}<span class="badge bg-warning text-dark">مفعل</span>{% else %}<span class="badge bg-secondary">معطّل</span>{% endif %}</td>
+        <td>{{ money(m.dmg_qty) }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('catalog.edit_material', mid=m.id) }}"><i class="bi bi-pencil"></i></a>
+          {% if is_admin %}
+          <form class="d-inline" method="post" action="{{ url_for('catalog.delete_material', mid=m.id) }}" onsubmit="return confirm('حذف المادة؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="text-center text-secondary py-4">لا توجد مواد — أضف أول مادة</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

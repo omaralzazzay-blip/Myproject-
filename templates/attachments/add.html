@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}رفع مرفق{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-upload ms-2"></i> رفع ملف (فاتورة/مخطط/مستند)</h3>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="POST" enctype="multipart/form-data" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">نوع المرفق</label>
+        <select name="file_type" class="form-select" required>
+          {% for t in types %}
+          <option value="{{ t }}">{{ {'invoice':'فاتورة','drawing':'مخطط/رسم هندسي','document':'مستند','other':'آخر'}[t] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">المرتبط بـ</label>
+        <select name="related_type" class="form-select">
+          <option value="purchase">عملية شراء</option>
+          <option value="supplier_delivery">توريد مورد</option>
+          <option value="project">المشروع</option>
+          <option value="expense">مصروف</option>
+          <option value="withdrawal">سحب</option>
+          <option value="other">آخر</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">رقم الكيان المرتبط (اختياري)</label>
+        <input type="number" name="related_id" class="form-control" placeholder="مثلاً ID التوريد">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">المشروع (اختياري)</label>
+        <select name="project_id" class="form-select">
+          <option value="">-- بدون --</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">الوصف</label>
+        <input name="description" class="form-control" placeholder="مثلاً: فاتورة شراء إسمنت 12/8">
+      </div>
+      <div class="col-12">
+        <label class="form-label">اختر الملف *</label>
+        <input type="file" name="file" class="form-control" required>
+        <small class="text-muted">الحد الأقصى 20MB. الصيغ المسموحة: PDF/صور/WORD/EXCEL/SVG/DWG/DXF/ZIP حسب نوع المرفق.</small>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success"><i class="bi bi-upload"></i> رفع</button>
+        <a href="{{ url_for('attachments.list_attachments', type='invoice') }}" class="btn btn-secondary">رجوع</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

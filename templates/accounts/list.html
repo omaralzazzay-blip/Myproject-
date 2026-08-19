@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}قائمة الحسابات (مدين / دائن){% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-journal-text me-2"></i>قائمة الحسابات (مدين / دائن)</h4>
+  <div class="d-flex gap-2">
+    <form class="d-flex gap-1" method="get" action="{{ url_for('accounts.list_accounts') }}">
+      <select class="form-select form-select-sm" name="type" style="max-width:180px">
+        <option value="">كل الأنواع</option>
+        <option value="project" {{ 'selected' if tp=='project' }}>حساب مشروع رئيسي</option>
+        <option value="debtor" {{ 'selected' if tp=='debtor' }}>مدين</option>
+        <option value="creditor" {{ 'selected' if tp=='creditor' }}>دائن</option>
+        <option value="worker" {{ 'selected' if tp=='worker' }}>عامل</option>
+        <option value="supervisor" {{ 'selected' if tp=='supervisor' }}>مشرف</option>
+      </select>
+      <button class="btn btn-sm btn-primary">تصفية</button>
+    </form>
+    {% if is_admin %}<a class="btn btn-sm btn-primary" href="{{ url_for('accounts.add_account') }}"><i class="bi bi-plus-lg me-1"></i>حساب جديد</a>{% endif %}
+  </div>
+</div>
+
+{% for pid, t in totals.items() %}
+<div class="alert alert-light border small py-2 mb-3">
+  <i class="bi bi-calculator me-1"></i><strong>{{ t.name }}</strong> — إجمالي المدين (محصل): {{ money(t.debit) }} • إجمالي الدائن (مخصوم من الميزانية): {{ money(t.credit) }}
+</div>
+{% endfor %}
+
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>الحساب</th><th>النوع</th><th>المشروع</th><th>حالة التخصيص</th><th class="text-end">الرصيد (محلي)</th><th class="text-end">إجراءات</th></tr></thead>
+    <tbody>
+    {% for a in items %}
+      {% set lbl = acc_label.get(a.acc_type, ('', 'secondary')) %}
+      <tr>
+        <td class="fw-semibold">{{ a.name }}{% if a.is_main %} <span class="badge bg-primary">رئيسي</span>{% endif %}</td>
+        <td><span class="badge bg-{{ lbl[1] }}">{{ lbl[0] }}</span>
+          {% if a.acc_type=='debtor' %}
+            {% if a.collected %}<span class="badge bg-success">محصّل</span>{% else %}<span class="badge bg-warning text-dark">غير محصّل</span>{% endif %}
+          {% endif %}</td>
+        <td>{{ a.project_name }}</td>
+        <td class="small text-secondary">
+          {% if a.acc_type=='debtor' %}{{ 'اعتُرف به عند التحصيل' if a.collected else 'يُعترف به عند التحصيل الفعلي' }}
+          {% elif a.acc_type=='creditor' %}يُخصم مباشرة من ميزانية المشروع
+          {% elif a.acc_type=='worker' %}حساب عامل
+          {% elif a.acc_type=='supervisor' %}حساب مشرف
+          {% else %}حساب المشروع الرئيسي{% endif %}
+        </td>
+        <td class="text-end fw-bold {{ 'text-success' if a.balance>=0 else 'text-danger' }}">{{ money(a.balance) }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('accounts.account_detail', aid=a.id) }}"><i class="bi bi-eye"></i></a>
+          {% if is_admin and not a.is_main %}
+          <form class="d-inline" method="post" action="{{ url_for('accounts.delete_account', aid=a.id) }}" onsubmit="return confirm('حذف الحساب وقيوده؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="6" class="text-center text-secondary py-4">لا توجد حسابات</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

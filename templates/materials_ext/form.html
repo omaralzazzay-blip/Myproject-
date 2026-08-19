@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'إضافة مادة' if item is none else 'تعديل/إدارة المادة' }}{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="fas fa-cube ms-2"></i> {{ 'إضافة مادة' if item is none else 'إدارة المادة: ' + item.name_ar }}</h3>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="POST" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">اسم المادة *</label>
+        <input name="name_ar" class="form-control" value="{{ item.name_ar if item else '' }}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">الوحدة الأساسية *</label>
+        <select name="default_unit_id" class="form-select" required>
+          {% for u in units %}<option value="{{ u.id }}" {% if item and item.unit_id==u.id %}selected{% endif %}>{{ u.name_ar }}</option>{% endfor %}
+        </select>
+        <small class="text-muted">الوحدة التي ستُعرض افتراضياً.</small>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">السعر/الوحدة</label>
+        <input name="price_per_unit" type="number" step="0.001" class="form-control" value="{{ item.price_per_unit if item else '' }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">العملة</label>
+        <select name="currency_id" class="form-select">
+          {% for c in currencies %}<option value="{{ c.id }}" {% if item and item.currency_id==c.id %}selected{% endif %}>{{ c.code }}</option>{% endfor %}
+        </select>
+      </div>
+
+      {% if item is none %}
+      <hr>
+      <h5 class="mt-3">وحدات قياس إضافية</h5>
+      <p class="text-muted small">اختر وحدات قياس إضافية (مثلاً: كيس/قنطار/طن) مع معامل التحويل مقارنة بالوحدة الأساسية.</p>
+      <table class="table table-sm">
+        <thead><tr><th>الوحدة</th><th>معامل التحويل (× الأساسية)</th></tr></thead>
+        <tbody>
+          {% for u in units %}
+          <tr>
+            <td><input type="checkbox" name="extra_unit_id" value="{{ u.id }}" class="form-check-input"> {{ u.name_ar }}</td>
+            <td><input type="number" step="0.001" min="0.001" name="extra_conv_{{ u.id }}" value="1" class="form-control form-control-sm" style="max-width:150px"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <hr>
+      <h5 class="mt-3">أنواع المادة</h5>
+      <p class="text-muted small">مثال: الخشب -&gt; كرد / ألواح / مرابيع</p>
+      <table class="table table-sm">
+        <thead><tr><th>#</th><th>الاسم</th><th>الرمز</th><th>ملاحظات</th></tr></thead>
+        <tbody>
+          {% for i in range(1, 11) %}
+          <tr>
+            <td>{{ i }}</td>
+            <td><input name="type_name_{{ i }}" class="form-control form-control-sm"></td>
+            <td><input name="type_code_{{ i }}" class="form-control form-control-sm"></td>
+            <td><input name="type_notes_{{ i }}" class="form-control form-control-sm"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <div class="col-12">
+        <button class="btn btn-success"><i class="fas fa-save"></i> حفظ</button>
+        <a href="{{ url_for('materials_ext.list_materials_ext') }}" class="btn btn-secondary">رجوع</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if item %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-info text-white"><strong>وحدات قياس المادة</strong></div>
+  <div class="card-body">
+    <table class="table table-sm">
+      <thead><tr><th>الوحدة</th><th>معامل التحويل</th><th>افتراضية؟</th><th>الإجراءات</th></tr></thead>
+      <tbody>
+        {% for u in item_units %}
+        <tr>
+          <td>{{ u.unit_name }}</td>
+          <td>{{ u.conversion_factor }}</td>
+          <td>{% if u.is_default %}<span class="badge bg-success">نعم</span>{% else %}<span class="badge bg-secondary">لا</span>{% endif %}</td>
+          <td>
+            {% if not u.is_default %}
+            <form method="POST" action="{{ url_for('materials_ext.delete_material_unit', muid=u.id) }}" style="display:inline" onsubmit="return confirm('حذف؟')">
+              <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if available_units %}
+    <form method="POST" action="{{ url_for('materials_ext.add_material_unit', mid=item.id) }}" class="row g-2 mt-2">
+      <div class="col-auto">
+        <select name="unit_id" class="form-select form-select-sm" required>
+          {% for u in available_units %}<option value="{{ u.id }}">{{ u.name_ar }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <input type="number" step="0.001" min="0.001" name="conversion_factor" value="1" class="form-control form-control-sm" placeholder="معامل التحويل" required>
+      </div>
+      <div class="col-auto"><button class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> إضافة وحدة</button></div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-success text-white"><strong>أنواع المادة</strong></div>
+  <div class="card-body">
+    <table class="table table-sm">
+      <thead><tr><th>الاسم</th><th>الرمز</th><th>ملاحظات</th><th>الإجراءات</th></tr></thead>
+      <tbody>
+        {% for t in item_types %}
+        <tr>
+          <td><strong>{{ t.name_ar }}</strong></td>
+          <td>{{ t.code or '-' }}</td>
+          <td>{{ t.notes or '-' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('materials_ext.delete_material_type', tid=t.id) }}" style="display:inline" onsubmit="return confirm('حذف؟')">
+              <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <form method="POST" action="{{ url_for('materials_ext.add_material_type', mid=item.id) }}" class="row g-2 mt-2">
+      <div class="col-md-3"><input name="name_ar" class="form-control form-control-sm" placeholder="اسم النوع (كرد/ألواح/مرابيع)" required></div>
+      <div class="col-md-2"><input name="code" class="form-control form-control-sm" placeholder="الرمز"></div>
+      <div class="col-md-5"><input name="notes" class="form-control form-control-sm" placeholder="ملاحظات"></div>
+      <div class="col-md-2"><button class="btn btn-sm btn-success"><i class="fas fa-plus"></i> إضافة نوع</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

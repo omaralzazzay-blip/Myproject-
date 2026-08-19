@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}تقرير المواد والتالف{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-box-seam ms-2"></i> تقرير المواد والتالف والاستهلاك</h3>
+
+<form method="GET" class="card shadow-sm mb-4">
+  <div class="card-body row g-2">
+    <div class="col-md-4"><label>من</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+    <div class="col-md-4"><label>إلى</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+    <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary"><i class="bi bi-funnel"></i> تطبيق</button></div>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-2"><div class="card"><div class="card-body"><small>رصيد افتتاح</small><h5>{{ '%0.2f'|format(totals.opening) }}</h5></div></div></div>
+  <div class="col-md-2"><div class="card border-success"><div class="card-body"><small>إدخال</small><h5 class="text-success">+{{ '%0.2f'|format(totals.in_qty) }}</h5></div></div></div>
+  <div class="col-md-2"><div class="card border-warning"><div class="card-body"><small>صرف</small><h5 class="text-warning">-{{ '%0.2f'|format(totals.out_qty) }}</h5></div></div></div>
+  <div class="col-md-2"><div class="card border-danger"><div class="card-body"><small>تالف</small><h5 class="text-danger">{{ '%0.2f'|format(totals.damage_qty) }}</h5></div></div></div>
+  <div class="col-md-2"><div class="card border-info"><div class="card-body"><small>قيمة الإهلاك</small><h5 class="text-info">{{ money(totals.used_value) }}</h5></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>المادة</th><th>الوحدة</th><th>الأنواع والوحدات</th>
+        <th>افتتاحي</th><th>+ إدخال</th><th>- صرف</th><th>تالف</th><th>الرصيد</th><th>قيمة مستهلكة</th>
+      </tr></thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td><strong>{{ r.name }}</strong> <small class="text-muted">{{ r.cur_code }}</small></td>
+          <td>{{ r.default_unit }}</td>
+          <td>
+            {% if r.units %}{% for u in r.units %}<span class="badge bg-secondary">{{ u.unit_name }}</span>{% endfor %}{% endif %}
+            {% if r.types %}{% for t in r.types %}<span class="badge bg-info text-dark">{{ t.name_ar }}</span>{% endfor %}{% endif %}
+          </td>
+          <td>{{ '%0.2f'|format(r.opening) }}</td>
+          <td class="text-success">+{{ '%0.2f'|format(r.in_qty) }}</td>
+          <td class="text-warning">-{{ '%0.2f'|format(r.out_qty) }}</td>
+          <td><span class="badge bg-danger">{{ '%0.2f'|format(r.damage_qty) }}</span></td>
+          <td>
+            <strong>{% if r.current>=0 %}<span class="text-primary">{{ '%0.2f'|format(r.current) }}</span>{% else %}<span class="text-danger">{{ '%0.2f'|format(r.current) }}</span>{% endif %}</strong>
+          </td>
+          <td>{{ money(r.used_value) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

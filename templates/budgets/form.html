@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}إضافة ميزانية{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:680px">
+  <h5 class="page-title mb-4"><i class="bi bi-wallet2 me-2"></i>إضافة ميزانية / رأس مال</h5>
+  <form method="post" action="{{ url_for('finance.add_budget') }}">
+    <div class="mb-3"><label class="form-label">مستوى الميزانية *</label>
+      <select class="form-select" name="level" id="levelSel">
+        <option value="owner">رأس مال المالك (عام)</option>
+        <option value="project" selected>ميزانية مشروع</option>
+        <option value="phase">ميزانية مرحلة</option>
+      </select></div>
+    <div class="mb-3" id="projWrap"><label class="form-label">المشروع *</label>
+      <select class="form-select" name="project_id" id="projSel">
+        <option value="">— اختر المشروع —</option>
+        {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select></div>
+    <div class="mb-3" id="phaseWrap"><label class="form-label">المرحلة</label>
+      <select class="form-select" name="phase_id" id="phaseSel">
+        <option value="">— اختر المرحلة —</option>
+        {% for ph in phases %}<option value="{{ ph.id }}" data-pid="{{ ph.project_id }}">{{ ph.name }} ({{ ph.pname }})</option>{% endfor %}
+      </select></div>
+    <div class="mb-3"><label class="form-label">مصدر التمويل</label>
+      <input class="form-control" name="source" placeholder="مثال: رأس مال المالك / تمويل خارجي"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6"><label class="form-label">المبلغ *</label>
+        <input type="number" step="any" class="form-control" name="amount" required></div>
+      <div class="col-md-6"><label class="form-label">العملة</label>
+        <select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }} - {{ c.name_ar }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="mb-3"><label class="form-label">ملاحظة</label>
+      <input class="form-control" name="note"></div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('finance.list_budgets') }}">إلغاء</a>
+  </form>
+</div>
+<script>
+  const ls=document.getElementById('levelSel'), pw=document.getElementById('projWrap'),
+        phw=document.getElementById('phaseWrap'), ps=document.getElementById('projSel'),
+        phs=document.getElementById('phaseSel');
+  function sync(){const v=ls.value;
+    pw.style.display = (v==='project'||v==='phase')?'':'none';
+    phw.style.display = v==='phase'?'':'none';
+    if(v==='owner'){ps.value='';phs.value='';}}
+  phs.addEventListener('change',()=>{const o=phs.selectedOptions[0];
+    if(o&&o.dataset.pid)ps.value=o.dataset.pid;});
+  ls.addEventListener('change',sync); sync();
+</script>
+{% endblock %}

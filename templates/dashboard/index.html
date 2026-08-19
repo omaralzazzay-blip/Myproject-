@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}لوحة التحكم - {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="page-title mb-1">لوحة تحكم المدير</h4>
+    <span class="text-secondary small">نظرة شاملة على المشاريع والمالية والموارد</span>
+  </div>
+  <div class="text-secondary small"><i class="bi bi-calendar3 me-1"></i>{{ today.strftime('%Y-%m-%d') }}</div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#1e3a5f,#2c5282)">
+    <div class="d-flex justify-content-between"><span>المشاريع</span><i class="bi bi-kanban"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.projects }}</h3><small class="text-white-50">منها {{ stats.active_projects }} نشطة</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#0ea5a4,#0b8c8b)">
+    <div class="d-flex justify-content-between"><span>المراحل</span><i class="bi bi-layers"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.phases }}</h3><small class="text-white-50">إجمالي المراحل</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#d97706,#b45309)">
+    <div class="d-flex justify-content-between"><span>العمال النشطون</span><i class="bi bi-people"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.workers }}</h3><small class="text-white-50">عامل مسجل</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#dc2626,#991b1b)">
+    <div class="d-flex justify-content-between"><span>المشرفون</span><i class="bi bi-person-badge"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.supervisors }}</h3><small class="text-white-50">مشرف نشط</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#4338ca,#3730a3)">
+    <div class="d-flex justify-content-between"><span>المواد/الأصناف</span><i class="bi bi-box-seam"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.materials }}</h3><small class="text-white-50">صنف مسجل</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <div class="d-flex justify-content-between"><span>المخازن</span><i class="bi bi-archive"></i></div>
+    <h3 class="mb-0 mt-2">{{ stats.warehouses }}</h3><small class="text-white-50">مخزن</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#0f766e,#115e59)">
+    <div class="d-flex justify-content-between"><span>الميزانية الكلية (محلي)</span><i class="bi bi-wallet2"></i></div>
+    <h3 class="mb-0 mt-2">{{ money(total_budget) }}</h3><small class="text-white-50">كل المصادر</small></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <div class="d-flex justify-content-between"><span>إجمالي المصروفات + السحوبات</span><i class="bi bi-graph-down-arrow"></i></div>
+    <h3 class="mb-0 mt-2">{{ money(total_expenses + total_withdrawals) }}</h3><small class="text-white-50">مصروف {{ money(total_expenses) }} + سحب {{ money(total_withdrawals) }}</small></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary"><i class="bi bi-receipt me-1"></i> آخر المصروفات</h6>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>البيان</th><th>المشروع</th><th>المرحلة</th><th>التاريخ</th><th class="text-end">المبلغ ({{ 'محلي' }})</th></tr></thead>
+        <tbody>
+        {% for e in recent_expenses %}
+          <tr><td>{{ e.description or '—' }}</td><td>{{ e.project_name }}</td><td>{{ e.phase_name or '—' }}</td>
+          <td>{{ e.expense_date }}</td><td class="text-end fw-semibold">{{ money(e.amount_local) }}</td></tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary">لا توجد بيانات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary"><i class="bi bi-cash-coin me-1"></i> آخر المسحوبات</h6>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>البيان</th><th>المشروع</th><th>المرحلة</th><th>التاريخ</th><th class="text-end">المبلغ ({{ 'محلي' }})</th></tr></thead>
+        <tbody>
+        {% for w in recent_withdrawals %}
+          <tr><td>{{ w.description or '—' }}</td><td>{{ w.project_name }}</td><td>{{ w.phase_name or '—' }}</td>
+          <td>{{ w.withdraw_date }}</td><td class="text-end fw-semibold">{{ money(w.amount_local) }}</td></tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary">لا توجد بيانات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-primary"><i class="bi bi-truck me-1"></i> آخر توريدات الموردين</h6>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>المورد</th><th>المادة</th><th>الكمية</th><th>المخزن</th><th class="text-end">الإجمالي (محلي)</th></tr></thead>
+        <tbody>
+        {% for d in recent_deliveries %}
+          <tr><td>{{ d.supplier_name }}</td><td>{{ d.material_name }}</td>
+          <td>{{ d.quantity }} {{ d.unit_name }}</td><td>{{ d.warehouse_name }}</td>
+          <td class="text-end fw-semibold">{{ money(d.total_local) }}</td></tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary">لا توجد بيانات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-1"></i> مواد قاربت على النفاد (مخزون ≤ 20)</h6>
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>المادة</th><th>المخزن</th><th class="text-end">الرصيد الحالي</th></tr></thead>
+        <tbody>
+        {% for s in low_stock %}
+          <tr><td>{{ s.material_name }}</td><td>{{ s.warehouse_name }}</td>
+          <td class="text-end"><span class="badge bg-danger">{{ money(s.balance) }} {{ s.unit_name }}</span></td></tr>
+        {% else %}<tr><td colspan="3" class="text-center text-secondary">لا توجد مواد منخفضة</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

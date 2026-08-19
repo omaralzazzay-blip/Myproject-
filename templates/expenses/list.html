@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}المصاريف{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-receipt me-2"></i>المصاريف</h4>
+  <div class="d-flex gap-2 align-items-center">
+    {% set total = items|sum(attribute='amount_local') %}
+    <span class="badge bg-danger fs-6">إجمالي المعروض (محلي): {{ money(total) }}</span>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('finance.add_expense') }}"><i class="bi bi-plus-lg me-1"></i>مصروف جديد</a>
+  </div>
+</div>
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>التاريخ</th><th>البيان</th><th>التصنيف</th><th>المشروع</th><th>المرحلة</th><th>المبلغ الأصلي</th><th>سعر الصرف</th><th>المعادل المحلي</th><th>بواسطة</th><th class="text-end"></th></tr></thead>
+    <tbody>
+    {% for e in items %}
+      <tr>
+        <td>{{ e.expense_date }}</td>
+        <td class="fw-semibold">{{ e.description or '—' }}</td>
+        <td><span class="badge-soft">{{ e.category or 'أخرى' }}</span></td>
+        <td>{{ e.project_name }}</td>
+        <td>{{ e.phase_name or '—' }}</td>
+        <td>{{ money(e.amount) }} <small class="text-secondary">{{ e.cur_code }}</small></td>
+        <td>{{ e.exchange_rate }}</td>
+        <td class="fw-semibold text-danger">{{ money(e.amount_local) }}</td>
+        <td class="small text-secondary">{{ e.created_by_name or '—' }}</td>
+        <td class="text-end">
+          {% if is_admin %}
+          <form method="post" action="{{ url_for('finance.delete_expense', eid=e.id) }}" onsubmit="return confirm('حذف المصروف؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="10" class="text-center text-secondary py-4">لا توجد مصاريف مسجلة</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

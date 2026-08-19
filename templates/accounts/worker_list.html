@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}حسابات العمال{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-people ms-2"></i> حسابات العمال (المدين / الدائن)</h3>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>المشروع</th><th>المرحلة</th><th>الاسم</th><th>النوع</th>
+        <th>رصيد افتتاحي</th><th>الرصيد الحالي</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td>{{ r.project_name }}</td>
+          <td>{{ r.phase_name }}</td>
+          <td><strong>{{ r.name }}</strong></td>
+          <td>{{ r.type_name }}</td>
+          <td>{{ money(r.opening) }}</td>
+          <td>
+            {% if r.balance > 0 %}<span class="badge bg-success">{{ money(r.balance) }} دائن (له)</span>
+            {% elif r.balance < 0 %}<span class="badge bg-danger">{{ money(-r.balance) }} مدين (عليه)</span>
+            {% else %}<span class="badge bg-secondary">0</span>{% endif %}
+          </td>
+          <td><a href="{{ url_for('accounts.worker_account_view', wid=r.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-journal-text"></i> كشف الحساب</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

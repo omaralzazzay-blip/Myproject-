@@ -1,0 +1,19 @@
+version = 1
+revision = 3
+requires-python = ">=3.10"
+
+[manifest]
+members = [
+    "cms",
+    "pyproject",
+]
+
+[[package]]
+name = "cms"
+version = "0.1.0"
+source = { editable = "." }
+
+[[package]]
+name = "pyproject"
+version = "0.1.0"
+source = { editable = "pyproject" }

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}أنواع العمال{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-person-gear me-2"></i>أنواع العمال</h4>
+  <form method="post" action="{{ url_for('catalog.add_worker_type') }}" class="d-flex gap-1">
+    <input class="form-control form-control-sm" name="name_ar" placeholder="نوع جديد (مثال: حداد)" required>
+    <input type="number" step="any" class="form-control form-control-sm" name="default_wage" placeholder="أجر افتراضي" style="max-width:130px">
+    <button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i></button>
+  </form>
+</div>
+<div class="card p-3">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>النوع</th><th>الأجر الافتراضي</th><th class="text-end">إجراءات</th></tr></thead>
+    <tbody>
+    {% for t in items %}
+      <tr>
+        <td class="fw-semibold">{{ t.name_ar }}</td>
+        <td>{{ t.default_wage }} <small class="text-secondary">{{ t.cur_code }}</small></td>
+        <td class="text-end">
+          <form method="post" action="{{ url_for('catalog.edit_worker_type', tid=t.id) }}" class="d-inline-flex gap-1">
+            <input class="form-control form-control-sm" name="name_ar" value="{{ t.name_ar }}" style="max-width:120px">
+            <input class="form-control form-control-sm" type="number" step="any" name="default_wage" value="{{ t.default_wage }}" style="max-width:110px">
+            <select class="form-select form-select-sm" name="currency_id" style="max-width:90px">
+              {% for c in [{'id':1,'code':'YER'},{'id':2,'code':'SAR'},{'id':3,'code':'USD'}] %}
+              <option value="{{ c.id }}" {{ 'selected' if t.currency_id==c.id }}>{{ c.code }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-check-lg"></i></button>
+          </form>
+          {% if is_admin %}
+          <form class="d-inline" method="post" action="{{ url_for('catalog.delete_worker_type', tid=t.id) }}" onsubmit="return confirm('حذف النوع؟')">
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="3" class="text-center text-secondary py-4">لا توجد أنواع</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

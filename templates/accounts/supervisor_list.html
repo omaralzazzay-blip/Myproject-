@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}حسابات المشرفين{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-person-badge ms-2"></i> حسابات المشرفين</h3>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr><th>الاسم</th><th>المستخدم</th><th>المشروع</th><th>الرصيد</th><th></th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><strong>{{ r.full_name }}</strong></td>
+          <td>{{ r.username }}</td>
+          <td>{{ r.project_name or '-' }}</td>
+          <td>
+            {% if r.balance > 0 %}<span class="badge bg-success">{{ money(r.balance) }} دائن</span>
+            {% elif r.balance < 0 %}<span class="badge bg-danger">{{ money(-r.balance) }} مدين</span>
+            {% else %}<span class="badge bg-secondary">0</span>{% endif %}
+          </td>
+          <td><a href="{{ url_for('accounts.supervisor_account_view', uid=r.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-journal-text"></i> كشف</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

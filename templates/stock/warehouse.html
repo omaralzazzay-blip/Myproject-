@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}المخزن - {{ wh.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-archive me-2"></i>{{ wh.name }}</h4>
+    <span class="text-secondary small">{{ wh.project_name }} • {{ wh.location or '' }} • المسؤول: {{ wh.manager_name or '—' }}</span>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('projects.edit_warehouse', wid=wh.id) }}"><i class="bi bi-pencil me-1"></i>تعديل</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6 class="fw-bold text-primary mb-3"><i class="bi bi-arrow-left-right me-1"></i>تسجيل حركة (إدخال / صرف / إرجاع / تالف)</h6>
+  <form method="post" action="{{ url_for('stock.add_movement', wid=wh.id) }}" class="row g-2 align-items-end">
+    <div class="col-md-2"><label class="form-label">النوع *</label>
+      <select class="form-select" name="movement_type" id="mv_type">
+        <option value="in">إدخال</option>
+        <option value="out">صرف</option>
+        <option value="return">إرجاع للمخزن</option>
+        <option value="damage">تالف</option>
+      </select></div>
+    <div class="col-md-3"><label class="form-label">المادة *</label>
+      <select class="form-select" name="material_id" id="mv_mat" required onchange="fillMatOptions()">
+        <option value="">— اختر —</option>
+        {% for m in materials %}<option value="{{ m.id }}">{{ m.name_ar }} ({{ m.unit_name }})</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2"><label class="form-label">النوع الفرعي</label>
+      <select class="form-select" name="material_type_id" id="mv_type_id"><option value="">—</option></select></div>
+    <div class="col-md-2"><label class="form-label">وحدة القياس</label>
+      <select class="form-select" name="unit_id" id="mv_unit"><option value="">الأساسية</option></select></div>
+    <div class="col-md-1"><label class="form-label">الكمية *</label>
+      <input type="number" step="any" class="form-control" name="quantity" required></div>
+    <div class="col-md-2"><label class="form-label">سعر الوحدة</label>
+      <input type="number" step="any" class="form-control" name="price_per_unit" value="0"></div>
+    <div class="col-md-2"><label class="form-label">العملة</label>
+      <select class="form-select" name="currency_id">
+        {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-1"><button class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i></button></div>
+    <div class="col-md-5"><label class="form-label">ملاحظة / سبب التالف</label>
+      <input class="form-control" name="note"></div>
+    <div class="col-md-3"><label class="form-label">التاريخ</label>
+      <input type="date" class="form-control" name="movement_date" value="{{ today }}"></div>
+  </form>
+  <small class="text-secondary mt-2 d-block"><i class="bi bi-info-circle me-1"></i>حركة «تالف» تحتسب تلقائياً من الرصيد وتُسجَّل في قسم التالف المخصص داخل المخزن. الإرجاع يزيد الرصيد.</small>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card p-3 h-100 mb-3">
+      <h6 class="fw-bold mb-3"><i class="bi bi-boxes me-1"></i>الأرصدة الحالية (مادة / نوع / وحدة)</h6>
+      <div class="table-responsive" style="max-height:260px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>المادة / النوع / الوحدة</th><th class="text-end">الرصيد</th></tr></thead>
+        <tbody>
+        {% for b in balances %}
+          <tr><td>{{ b.material_name }}{% if b.type_name %} <span class="type-chip">{{ b.type_name }}</span>{% endif %}
+            <span class="text-secondary small">/ {{ b.unit_name }}</span></td>
+          <td class="text-end">
+            {% if b.balance <= 20 %}<span class="badge bg-danger">{{ money(b.balance) }} {{ b.unit_name }}</span>
+            {% else %}<span class="badge bg-success">{{ money(b.balance) }} {{ b.unit_name }}</span>{% endif %}
+          </td></tr>
+        {% else %}<tr><td colspan="2" class="text-center text-secondary">لا توجد مواد</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card p-3">
+      <h6 class="fw-bold text-warning mb-3"><i class="bi bi-exclamation-triangle me-1"></i>قسم التالف في هذا المخزن</h6>
+      <div class="table-responsive" style="max-height:260px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>التاريخ</th><th>المادة/النوع</th><th class="text-end">الكمية</th><th class="text-end">القيمة</th><th class="text-end"></th></tr></thead>
+        <tbody>
+        {% for d in damages %}
+          <tr>
+            <td>{{ d.damage_date }}</td>
+            <td>{{ d.material_name }}{% if d.type_name %} <span class="type-chip">{{ d.type_name }}</span>{% endif %}
+              <div class="small text-secondary">{{ d.reason or '' }}</div></td>
+            <td class="text-end">{{ money(d.quantity) }} {{ d.unit_name }}</td>
+            <td class="text-end text-warning fw-semibold">{{ money(d.value_local) }}</td>
+            <td class="text-end">
+              {% if is_admin %}
+              <form method="post" action="{{ url_for('stock.delete_damage', did=d.id) }}" onsubmit="return confirm('حذف قيد التالف؟')">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary py-3">لا توجد مواد تالفة — ممتاز</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card p-3 h-100">
+      <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-1"></i>آخر الحركات</h6>
+      <div class="table-responsive" style="max-height:520px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>المادة/النوع</th><th class="text-end">الكمية</th><th class="text-end">الإجمالي (محلي)</th><th>بواسطة</th><th class="text-end"></th></tr></thead>
+        <tbody>
+        {% for m in movements %}
+          {% set lbl = mov_label.get(m.movement_type, ('', 'secondary')) %}
+          <tr>
+            <td>{{ m.movement_date }}</td>
+            <td><span class="badge bg-{{ lbl[1] }}">{{ lbl[0] }}</span></td>
+            <td>{{ m.material_name }}{% if m.type_name %} <span class="type-chip">{{ m.type_name }}</span>{% endif %}
+              <span class="text-secondary small">/ {{ m.unit_name }}</span></td>
+            <td class="text-end">{{ money(m.quantity) }}</td>
+            <td class="text-end fw-semibold">{{ money(m.total_local) }}</td>
+            <td class="small text-secondary">{{ m.by_name or '—' }}</td>
+            <td class="text-end">
+              {% if is_admin %}
+              <form method="post" action="{{ url_for('stock.delete_movement', mid=m.id) }}" onsubmit="return confirm('حذف الحركة؟')">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="7" class="text-center text-secondary py-3">لا توجد حركات</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MAT_TYPES = {{ material_types | tojson }};
+const MAT_UNITS = {{ material_units | tojson }};
+function fillMatOptions(){
+  const mid = document.getElementById('mv_mat').value;
+  const tSel = document.getElementById('mv_type_id');
+  const uSel = document.getElementById('mv_unit');
+  tSel.innerHTML = '<option value="">—</option>';
+  uSel.innerHTML = '<option value="">الأساسية</option>';
+  if(!mid) return;
+  MAT_TYPES.filter(t => t.material_id == mid).forEach(t => {
+    tSel.insertAdjacentHTML('beforeend', '<option value="' + t.id + '">' + t.name_ar + '</option>');
+  });
+  MAT_UNITS.filter(u => u.material_id == mid).forEach(u => {
+    uSel.insertAdjacentHTML('beforeend', '<option value="' + u.unit_id + '">' + u.unit_name + '</option>');
+  });
+}
+window.addEventListener('DOMContentLoaded', fillMatOptions);
+document.getElementById('mv_mat').addEventListener('change', fillMatOptions);
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}مورد جديد{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:600px">
+  <h5 class="page-title mb-4"><i class="bi bi-truck me-2"></i>إضافة مورد جديد</h5>
+  <form method="post" action="{{ url_for('finance.add_supplier') }}">
+    <div class="mb-3"><label class="form-label">اسم المورد *</label>
+      <input class="form-control" name="name" required></div>
+    <div class="mb-3"><label class="form-label">رقم الهاتف</label>
+      <input class="form-control" name="phone"></div>
+    <div class="mb-3"><label class="form-label">ملاحظات</label>
+      <textarea class="form-control" rows="3" name="notes"></textarea></div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('finance.list_suppliers') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}حركة مادة (رصيد / تالف){% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="page-title mb-0"><i class="bi bi-box me-2"></i>حركة المادة — الرصيد والتالف</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('reports.material_report', material_id=mid, warehouse_id=wid, from=frm, to=to, export='pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+    <a class="btn btn-sm btn-outline-success" href="{{ url_for('reports.material_report', material_id=mid, warehouse_id=wid, from=frm, to=to, export='xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <form class="row g-2 align-items-end" method="get" action="{{ url_for('reports.material_report') }}">
+    <div class="col-md-3"><label class="form-label">المادة</label>
+      <select class="form-select" name="material_id" required>
+        <option value="">— اختر —</option>
+        {% for m in materials %}<option value="{{ m.id }}" {{ 'selected' if mid==m.id }}>{{ m.name }} ({{ m.project_name }})</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3"><label class="form-label">المخزن</label>
+      <select class="form-select" name="warehouse_id">
+        <option value="">كل المخازن</option>
+        {% for w in warehouses %}<option value="{{ w.id }}" {{ 'selected' if wid==w.id }}>{{ w.pname }} / {{ w.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2"><label class="form-label">من</label>
+      <input type="date" class="form-control" name="from" value="{{ frm }}"></div>
+    <div class="col-md-2"><label class="form-label">إلى</label>
+      <input type="date" class="form-control" name="to" value="{{ to }}"></div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">عرض</button></div>
+  </form>
+</div>
+{% if summary %}
+<div class="row g-2 mb-3">
+  <div class="col-md-4"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <span>الرصيد النهائي (في الفترة)</span><h4 class="mb-0 mt-1">{{ money(summary.balance) }}</h4></div></div>
+  <div class="col-md-4"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <span>إجمالي التالف (كمية)</span><h4 class="mb-0 mt-1">{{ money(summary.dmg_qty) }}</h4></div></div>
+  <div class="col-md-4"><div class="stat-card" style="background:linear-gradient(135deg,#b45309,#92400e)">
+    <span>قيمة التالف (محلي)</span><h4 class="mb-0 mt-1">{{ money(summary.dmg_val) }}</h4></div></div>
+</div>
+{% endif %}
+<div class="card p-3">
+  <div class="table-responsive" style="max-height:520px">
+  <table class="table table-sm table-hover mb-0">
+    <thead><tr><th>التاريخ</th><th>المخزن</th><th>النوع الفرعي</th><th>الحركة</th><th class="text-end">الكمية</th><th>الوحدة</th><th class="text-end">القيمة (محلي)</th><th class="text-end">الرصيد الجاري</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.movement_date }}</td>
+        <td>{{ r.warehouse_name }}</td>
+        <td>{% if r.type_name %}<span class="type-chip">{{ r.type_name }}</span>{% else %}—{% endif %}</td>
+        <td>{% if r.movement_type=='in' %}<span class="badge bg-success">إدخال</span>
+          {% elif r.movement_type=='out' %}<span class="badge bg-danger">صرف</span>
+          {% elif r.movement_type=='return' %}<span class="badge bg-info">إرجاع</span>
+          {% else %}<span class="badge bg-warning text-dark">تالف</span>{% endif %}</td>
+        <td class="text-end">{{ money(r.quantity) }}</td>
+        <td>{{ r.unit_name }}</td>
+        <td class="text-end">{{ money(r.total_local) }}</td>
+        <td class="text-end fw-bold">{{ money(r.run) }}</td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="text-center text-secondary py-4">اختر مادة لعرض حركتها</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

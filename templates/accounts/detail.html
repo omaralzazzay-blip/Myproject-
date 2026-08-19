@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}كشف حساب - {{ item.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-journal-text me-2"></i>{{ item.name }}</h4>
+    <span class="text-secondary small">{{ item.project_name }} •
+      {% set lbl = acc_label.get(item.acc_type, ('', 'secondary')) %}
+      <span class="badge bg-{{ lbl[1] }}">{{ lbl[0] }}</span>
+      {% if item.acc_type=='debtor' %}
+        {% if item.collected %}<span class="badge bg-success">محصّل ({{ item.collection_date or '' }})</span>
+        {% else %}<span class="badge bg-warning text-dark">غير محصّل</span>{% endif %}
+      {% endif %}
+    </span>
+  </div>
+  <div class="text-end">
+    <div class="fs-5 fw-bold {{ 'text-success' if balance>=0 else 'text-danger' }}">{{ money(balance) }} <span class="small text-secondary">محلي</span></div>
+    <span class="small text-secondary">رصيد الحساب الحالي</span>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card p-3 mb-3">
+      <h6 class="fw-bold text-primary mb-3"><i class="bi bi-plus-circle me-1"></i>تسجيل قيد</h6>
+      {% if is_admin %}
+      <form method="post" action="{{ url_for('accounts.add_entry', aid=item.id) }}" class="row g-2">
+        <div class="col-6"><select class="form-select" name="direction">
+          <option value="debit">مدين (+)</option>
+          <option value="credit">دائن (−)</option>
+        </select></div>
+        <div class="col-6"><input type="number" step="any" class="form-control" name="amount" placeholder="المبلغ" required></div>
+        <div class="col-6"><select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+        </select></div>
+        <div class="col-6"><input type="date" class="form-control" name="entry_date" value="{{ today }}"></div>
+        <div class="col-12"><input class="form-control" name="note" placeholder="ملاحظة"></div>
+        <div class="col-12"><button class="btn btn-sm btn-primary w-100">تسجيل القيد</button></div>
+      </form>
+      {% else %}<span class="text-secondary small">لا تملك صلاحية إضافة قيود.</span>{% endif %}
+    </div>
+    {% if item.acc_type=='debtor' and not item.collected and is_admin %}
+    <div class="card p-3">
+      <h6 class="fw-bold text-success mb-3"><i class="bi bi-cash-coin me-1"></i>تحصيل المدين</h6>
+      <form method="post" action="{{ url_for('accounts.collect_account', aid=item.id) }}" class="row g-2">
+        <div class="col-8"><input type="number" step="any" class="form-control" name="amount" placeholder="المبلغ المحصل" required></div>
+        <div class="col-4"><select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+        </select></div>
+        <div class="col-12"><button class="btn btn-sm btn-success w-100">اعتماد التحصيل (يُدخل للميزانية)</button></div>
+      </form>
+      <small class="text-secondary d-block mt-2"><i class="bi bi-info-circle me-1"></i>عند التحصيل يُعترف بالمدين ويُضاف للميزانية عبر الحساب الرئيسي.</small>
+    </div>
+    {% elif item.acc_type=='debtor' and item.collected %}
+    <div class="card p-3 text-center text-success"><i class="bi bi-check-circle fs-2"></i><p class="mb-0 mt-1">تم تحصيل هذا المدين</p></div>
+    {% elif item.acc_type=='creditor' and main %}
+    <div class="card p-3">
+      <h6 class="fw-bold text-danger mb-2"><i class="bi bi-wallet2 me-1"></i>يُخصم من الحساب الرئيسي</h6>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('accounts.account_detail', aid=main.id) }}">{{ main.name }}</a>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-8">
+    <div class="card p-3">
+      <h6 class="fw-bold mb-3"><i class="bi bi-clock-history me-1"></i>القيود ({{ entries|length }})</h6>
+      <div class="table-responsive" style="max-height:480px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>التاريخ</th><th>الاتجاه</th><th>الملاحظة</th><th class="text-end">المبلغ (محلي)</th><th>بواسطة</th></tr></thead>
+        <tbody>
+        {% for e in entries %}
+          <tr>
+            <td>{{ e.entry_date }}</td>
+            <td>{% if e.direction=='debit' %}<span class="badge bg-success">مدين</span>{% else %}<span class="badge bg-danger">دائن</span>{% endif %}</td>
+            <td class="small">{{ e.note or '—' }}</td>
+            <td class="text-end fw-semibold">{{ money(e.amount_local) }}</td>
+            <td class="small text-secondary">{{ e.by_name or '—' }}</td>
+          </tr>
+        {% else %}<tr><td colspan="5" class="text-center text-secondary py-3">لا توجد قيود</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

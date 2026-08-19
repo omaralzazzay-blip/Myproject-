@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}قيد صرف / مسحوبات جديد{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:860px">
+  <h5 class="page-title mb-4"><i class="bi bi-arrow-left-right me-2"></i>تسجيل مصروف / مسحوبات (يُخصم تلقائياً من حساب المستفيد)</h5>
+  <form method="post" action="{{ url_for('issues.add_issue') }}">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4"><label class="form-label">المشروع *</label>
+        <select class="form-select" name="project_id" required>
+          <option value="">— اختر —</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">نوع المستفيد *</label>
+        <select class="form-select" name="beneficiary_type" id="ben_type" onchange="toggleBen()">
+          <option value="worker">عامل</option>
+          <option value="supervisor">مشرف</option>
+        </select></div>
+      <div class="col-md-4"><label class="form-label">المستفيد *</label>
+        <select class="form-select" name="worker_id" id="ben_worker" required>
+          <option value="">— اختر العامل —</option>
+          {% for w in workers %}<option value="{{ w.id }}">{{ w.name }} ({{ w.project_name }})</option>{% endfor %}
+        </select>
+        <select class="form-select d-none" name="supervisor_user_id" id="ben_supervisor">
+          <option value="">— اختر المشرف —</option>
+          {% for s in supervisors %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">نوع القيد *</label>
+        <select class="form-select" name="issue_kind" id="issue_kind" onchange="toggleKind()">
+          <option value="material">صرف مواد من المخزن</option>
+          <option value="cash">مبلغ نقدي / سلفة</option>
+        </select></div>
+      <div class="col-md-4" id="wh_col"><label class="form-label">المخزن *</label>
+        <select class="form-select" name="warehouse_id" id="issue_wh">
+          <option value="">— اختر —</option>
+          {% for w in warehouses %}<option value="{{ w.id }}">{{ w.pname }} / {{ w.name }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4" id="mat_col"><label class="form-label">المادة *</label>
+        <select class="form-select" name="material_id" id="issue_mat" onchange="fillIssueMat()">
+          <option value="">— اختر —</option>
+          {% for m in materials %}<option value="{{ m.id }}">{{ m.name_ar }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">النوع الفرعي</label>
+        <select class="form-select" name="material_type_id" id="issue_mt"><option value="">—</option></select></div>
+      <div class="col-md-4"><label class="form-label">وحدة القياس</label>
+        <select class="form-select" name="unit_id" id="issue_unit"><option value="">الأساسية</option></select></div>
+      <div class="col-md-4" id="qty_col"><label class="form-label">الكمية *</label>
+        <input type="number" step="any" class="form-control" name="quantity" id="issue_qty" value="0"></div>
+      <div class="col-md-4" id="price_col"><label class="form-label">سعر الوحدة</label>
+        <input type="number" step="any" class="form-control" name="unit_price" value="0"></div>
+      <div class="col-md-4" id="amount_col d-none"><label class="form-label">المبلغ النقدي *</label>
+        <input type="number" step="any" class="form-control d-none" name="amount" id="issue_amount" value="0"></div>
+      <div class="col-md-4"><label class="form-label">العملة</label>
+        <select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">التاريخ</label>
+        <input type="date" class="form-control" name="issue_date" value="{{ today }}"></div>
+      <div class="col-md-8"><label class="form-label">البيان</label>
+        <input class="form-control" name="description" placeholder="مثال: صرف حديد لصب السقف"></div>
+    </div>
+    <div class="alert alert-light border small mb-3">
+      <i class="bi bi-info-circle me-1"></i>
+      تُخصم قيمة هذا القيد تلقائياً من حساب {{ '<strong>العامل</strong>' if True else '' }} المستفيد في قائمة الحسابات، وتُسجَّل حركة صرف من المخزن (في حالة صرف المواد).
+    </div>
+    <button class="btn btn-primary px-4">حفظ القيد</button>
+    <a class="btn btn-light" href="{{ url_for('issues.list_issues') }}">إلغاء</a>
+  </form>
+</div>
+
+<script>
+const MAT_TYPES = {{ material_types | tojson }};
+const MAT_UNITS = {{ material_units | tojson }};
+function toggleBen(){
+  const t = document.getElementById('ben_type').value;
+  document.getElementById('ben_worker').classList.toggle('d-none', t!='worker');
+  document.getElementById('ben_supervisor').classList.toggle('d-none', t!='supervisor');
+  document.getElementById('ben_worker').required = (t=='worker');
+  document.getElementById('ben_supervisor').required = (t=='supervisor');
+}
+function toggleKind(){
+  const k = document.getElementById('issue_kind').value;
+  const isMat = (k=='material');
+  ['wh_col','mat_col','qty_col','price_col'].forEach(id => document.getElementById(id).style.display = isMat?'':'none');
+  document.getElementById('issue_wh').required = isMat;
+  document.getElementById('issue_mat').required = isMat;
+  document.getElementById('issue_qty').required = isMat;
+  document.getElementById('issue_amount').classList.toggle('d-none', isMat);
+}
+function fillIssueMat(){
+  const mid = document.getElementById('issue_mat').value;
+  const tSel = document.getElementById('issue_mt');
+  const uSel = document.getElementById('issue_unit');
+  tSel.innerHTML = '<option value="">—</option>';
+  uSel.innerHTML = '<option value="">الأساسية</option>';
+  if(!mid) return;
+  MAT_TYPES.filter(t => t.material_id == mid).forEach(t =>
+    tSel.insertAdjacentHTML('beforeend', '<option value="' + t.id + '">' + t.name_ar + '</option>'));
+  MAT_UNITS.filter(u => u.material_id == mid).forEach(u =>
+    uSel.insertAdjacentHTML('beforeend', '<option value="' + u.unit_id + '">' + u.unit_name + '</option>'));
+}
+toggleBen(); toggleKind();
+</script>
+{% endblock %}

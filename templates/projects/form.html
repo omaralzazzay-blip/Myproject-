@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مشروع' if item else 'مشروع جديد' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:760px">
+  <h5 class="page-title mb-4"><i class="bi bi-kanban me-2"></i>{{ 'تعديل المشروع' if item else 'إضافة مشروع جديد' }}</h5>
+  <form method="post" action="{{ action }}">
+    <div class="row g-3">
+      <div class="col-md-8"><label class="form-label">اسم المشروع *</label>
+        <input class="form-control" name="name" required value="{{ item.name if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">رمز المشروع</label>
+        <input class="form-control" name="code" value="{{ item.code if item else '' }}"></div>
+      <div class="col-12"><label class="form-label">الموقع</label>
+        <input class="form-control" name="location" value="{{ item.location if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">تاريخ البدء</label>
+        <input type="date" class="form-control" name="start_date" value="{{ item.start_date if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">تاريخ الانتهاء</label>
+        <input type="date" class="form-control" name="end_date" value="{{ item.end_date if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">الحالة</label>
+        <select class="form-select" name="status">
+          {% for v, lbl in [('planned','مخطط له'),('active','نشط'),('paused','متوقف'),('finished','منتهي')] %}
+          <option value="{{ v }}" {{ 'selected' if item and item.status==v }}>{{ lbl }}</option>{% endfor %}
+        </select></div>
+      <div class="col-12"><label class="form-label">وصف المشروع</label>
+        <textarea class="form-control" rows="3" name="description">{{ item.description if item else '' }}</textarea></div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-primary px-4">حفظ</button>
+      <a class="btn btn-light" href="{{ url_for('projects.list_projects') }}">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

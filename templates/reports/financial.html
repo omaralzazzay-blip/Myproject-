@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}التقرير المالي الشامل{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="page-title mb-0"><i class="bi bi-pie-chart me-2"></i>التقرير المالي الشامل</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('reports.financial_report', export='pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+    <a class="btn btn-sm btn-outline-success" href="{{ url_for('reports.financial_report', export='xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>طباعة</button>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="row text-center g-2">
+    <div class="col-md-4"><div class="border rounded-3 p-3"><div class="text-secondary small">رأس مال المالك (المحلي)</div>
+      <h4 class="text-primary mb-0">{{ money(owner) }}</h4></div></div>
+    <div class="col-md-4"><div class="border rounded-3 p-3"><div class="text-secondary small">عدد المشاريع</div>
+      <h4 class="mb-0">{{ rows|length }}</h4></div></div>
+    <div class="col-md-4"><div class="border rounded-3 p-3"><div class="text-secondary small">قيمة التوريدات (مواد)</div>
+      <h4 class="text-info mb-0">{{ money(rows|sum(attribute='supplies')) }}</h4></div></div>
+  </div>
+</div>
+
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>المشروع</th><th>الميزانية (مشروع+مراحل)</th><th>تمويل الممولين</th><th>إجمالي الموارد</th>
+      <th>المصاريف</th><th>المسحوبات</th><th>توريدات مواد</th><th>دائن (مخصوم فوراً)</th><th>مدين (محصل)</th><th class="text-end">المتبقي</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td class="fw-bold">{{ r.name }}</td>
+        <td>{{ money(r.budget_p) }}</td>
+        <td>{{ money(r.funding) }}</td>
+        <td class="fw-semibold">{{ money(r.budget_p + r.funding) }}</td>
+        <td class="text-danger">{{ money(r.expenses) }}</td>
+        <td class="text-warning">{{ money(r.withdrawals) }}</td>
+        <td>{{ money(r.supplies) }}</td>
+        <td class="text-danger">{{ money(r.creditors) }}</td>
+        <td class="text-success">{{ money(r.debtors) }}</td>
+        <td class="text-end fw-bold {{ 'text-success' if r.remaining>=0 else 'text-danger' }}">{{ money(r.remaining) }}</td>
+      </tr>
+    {% else %}<tr><td colspan="10" class="text-center text-secondary py-4">لا توجد مشاريع</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <div class="alert alert-light border mt-3 mb-0 small">
+    <i class="bi bi-info-circle me-1"></i>
+    المتبقي = (الميزانية + تمويل الممولين) − (المصاريف + المسحوبات + الدائن المخصوم فوراً).<br>
+    <strong>المدين:</strong> يُعترف به عند تحصيله فعلياً (أساس الاستحقاق النقدي للمدين) — يظهر «المدين المحصل» فقط.<br>
+    <strong>الدائن:</strong> يُخصم مباشرة من ميزانية المشروع — يظهر في «الدائن المخصوم فوراً».
+  </div>
+</div>
+{% endblock %}

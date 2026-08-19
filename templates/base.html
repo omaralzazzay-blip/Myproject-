@@ -1,0 +1,467 @@
+{% set role = cur_user.role if cur_user else '' %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    .sidebar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      bottom: 0 !important;
+      width: 250px !important;
+      height: 100vh !important;
+      overflow-y: auto !important;
+      background-color: #f8f9fa !important;
+      border-right: 1px solid #dee2e6 !important;
+      padding-top: 70px !important;
+      z-index: 1000 !important;
+      scrollbar-width: thin;
+      scrollbar-color: #c1c1c1 transparent;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background-color: #c1c1c1;
+      border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background-color: #a0a0a0;
+    }
+
+    .sidebar .nav-link {
+      color: #333;
+      border-radius: 0.375rem;
+      padding: 0.6rem 0.75rem;
+      transition: background 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar .nav-link:hover {
+      background: #e9ecef;
+    }
+
+    .sidebar .nav-link.active {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    .sidebar .nav-link .badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    /* ================================================================ */
+    /* بطاقات الإحصائيات */
+    /* ================================================================ */
+    .stat-card {
+      color: #fff;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* ================================================================ */
+    /* المحتوى الرئيسي */
+    /* ================================================================ */
+    main {
+      margin-left: 250px !important;
+      width: calc(100% - 250px) !important;
+      max-width: calc(100% - 250px) !important;
+      flex: 0 0 auto !important;
+      padding-top: 20px !important;
+    }
+
+    /* ================================================================ */
+    /* الشاشات الصغيرة */
+    /* ================================================================ */
+    @media (max-width: 767.98px) {
+      .sidebar {
+        display: none !important;
+      }
+
+      main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-top: 60px !important;
+      }
+
+      .d-md-none {
+        display: block !important;
+        position: fixed !important;
+        top: 65px !important;
+        left: 10px !important;
+        z-index: 1050 !important;
+      }
+    }
+
+    .offcanvas-body {
+      overflow-y: auto !important;
+      max-height: 80vh !important;
+    }
+
+    :root {
+      --primary: #1e3a5f;
+      --accent: #0ea5a4;
+      --light: #f4f7fb;
+      --sidebar-w: 255px;
+    }
+
+    * {
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--light);
+    }
+
+    #wrapper {
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, #16283f, #1e3a5f);
+      min-height: 100vh;
+      position: fixed;
+      right: 0;
+      top: 0;
+      z-index: 1040;
+      color: #cfe0f0;
+      transition: .25s;
+      overflow-y: auto;
+    }
+
+    .sidebar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.02rem;
+    }
+
+    .sidebar .nav-section {
+      font-size: .72rem;
+      color: #7f9cbd;
+      padding: 14px 16px 4px;
+      letter-spacing: .5px;
+    }
+
+    .sidebar a.nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      color: #cfe0f0;
+      text-decoration: none;
+      font-size: .9rem;
+      border-right: 3px solid transparent;
+    }
+
+    .sidebar a.nav-item:hover {
+      background: rgba(255, 255, 255, .06);
+      color: #fff;
+    }
+
+    .sidebar a.nav-item.active {
+      background: var(--accent);
+      color: #fff;
+      border-right-color: #fff;
+    }
+
+    .sidebar a.nav-sub {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 28px;
+      color: #9fb6cf;
+      text-decoration: none;
+      font-size: .82rem;
+    }
+
+    .sidebar a.nav-sub:hover {
+      color: #fff;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5eaf0;
+      padding: 10px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+    }
+
+    .btn-toggle {
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .main-wrap {
+      margin-right: var(--sidebar-w);
+    }
+
+    .card {
+      border: 0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(20, 40, 80, .06);
+    }
+
+    .stat-card {
+      border-radius: 14px;
+      color: #fff;
+      padding: 18px;
+    }
+
+    .stat-card .bi {
+      font-size: 1.8rem;
+      opacity: .9;
+    }
+
+    .badge-soft {
+      background: rgba(14, 165, 164, .12);
+      color: #0b7f7e;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: .78rem;
+    }
+
+    .table thead th {
+      background: #f2f6fb;
+      color: #33475c;
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    .page-title {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #0b8c8b;
+      border-color: #0b8c8b;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      background: #e11d48;
+      color: #fff;
+      font-size: .62rem;
+      border-radius: 50%;
+      padding: 1px 5px;
+    }
+
+    .auth-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #16283f, #1e3a5f 55%, #0ea5a4);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .type-chip {
+      display: inline-block;
+      background: #eef2f7;
+      color: #33475c;
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: .75rem;
+      margin: 1px;
+    }
+
+    @media (max-width: 991px) {
+      .sidebar {
+        right: -260px;
+      }
+
+      .sidebar.show {
+        right: 0;
+      }
+
+      .main-wrap {
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  {% if cur_user %}
+  <div id="wrapper" class="d-flex">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><i class="bi bi-buildings fs-4"></i><span>إدارة المشاريع<br><small class="text-white-50"
+            style="font-size:.7rem">الإنشائية</small></span></div>
+      <div class="nav-section">الرئيسية</div>
+      <a class="nav-item {{ 'active' if request.endpoint=='dashboard.index' }}"
+        href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
+
+      <div class="nav-section">المشاريع</div>
+      <a class="nav-item {{ 'active' if request.endpoint in ['projects.list_projects','projects.view_project','projects.add_project','projects.edit_project'] }}"
+        href="{{ url_for('projects.list_projects') }}"><i class="bi bi-kanban"></i> المشاريع</a>
+      {% if is_admin %}
+      <a class="nav-item" href="{{ url_for('projects.add_project') }}"><i class="bi bi-plus-circle"></i> مشروع جديد</a>
+      <a class="nav-item" href="{{ url_for('projects.add_phase') }}"><i class="bi bi-layers"></i> إضافة مرحلة</a>
+      {% endif %}
+      <a class="nav-item" href="{{ url_for('projects.add_warehouse') }}"><i class="bi bi-plus-square"></i> إضافة
+        مخزن</a>
+
+      <div class="nav-section">الفهرس الثابت</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_materials') }}"
+        href="{{ url_for('catalog.list_materials') }}"><i class="bi bi-box-seam"></i> المواد والأصناف</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_worker_types') }}"
+        href="{{ url_for('catalog.list_worker_types') }}"><i class="bi bi-person-gear"></i> أنواع العمال</a>
+      {% if is_admin %}
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_currencies') }}"
+        href="{{ url_for('catalog.list_currencies') }}"><i class="bi bi-currency-exchange"></i> العملات وأسعارها</a>
+      {% endif %}
+
+      <div class="nav-section">العمال</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('workers.') }}"
+        href="{{ url_for('workers.list_workers') }}"><i class="bi bi-people"></i> سجل العمال</a>
+
+      <div class="nav-section">المالية والحسابات</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_budgets') }}"
+        href="{{ url_for('finance.list_budgets') }}"><i class="bi bi-wallet2"></i> الميزانيات</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_expenses') }}"
+        href="{{ url_for('finance.list_expenses') }}"><i class="bi bi-receipt"></i> المصاريف</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_withdrawals') }}"
+        href="{{ url_for('finance.list_withdrawals') }}"><i class="bi bi-cash-coin"></i> المسحوبات</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('issues.') }}"
+        href="{{ url_for('issues.list_issues') }}"><i class="bi bi-arrow-left-right"></i> المصروفات والمسحوبات (صرف)</a>
+      {% if is_admin %}
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_funders') }}"
+        href="{{ url_for('finance.list_funders') }}"><i class="bi bi-bank"></i> الممولون</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_suppliers') }}"
+        href="{{ url_for('finance.list_suppliers') }}"><i class="bi bi-truck"></i> الموردون</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('accounts.') }}"
+        href="{{ url_for('accounts.list_accounts') }}"><i class="bi bi-journal-text"></i> قائمة الحسابات (مدين/دائن)</a>
+      {% endif %}
+
+      <div class="nav-section">المخازن</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('stock.') }}"
+        href="{{ url_for('stock.overview') }}"><i class="bi bi-archive"></i> المخازن والأرصدة والتالف</a>
+
+      <div class="nav-section">المرفقات</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('attachments.') }}"
+        href="{{ url_for('attachments.list_attachments') }}"><i class="bi bi-paperclip"></i> الفواتير والمستندات
+        والمخططات</a>
+
+      <div class="nav-section">التقارير</div>
+      <a class="nav-item {{ 'active' if request.endpoint=='reports.reports_home' }}"
+        href="{{ url_for('reports.reports_home') }}"><i class="bi bi-file-earmark-bar-graph"></i> التقرير العام
+        (د/أ/ش/س)</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.worker_report' }}"
+        href="{{ url_for('reports.worker_report') }}"><i class="bi bi-person"></i> كشف حساب عامل</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.supervisor_report' }}"
+        href="{{ url_for('reports.supervisor_report') }}"><i class="bi bi-person-badge"></i> كشف حساب مشرف</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.material_report' }}"
+        href="{{ url_for('reports.material_report') }}"><i class="bi bi-box"></i> حركة مادة (رصيد/تالف)</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.damaged_report' }}"
+        href="{{ url_for('reports.damaged_report') }}"><i class="bi bi-exclamation-triangle"></i> تقرير التالف</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.financial_report' }}"
+        href="{{ url_for('reports.financial_report') }}"><i class="bi bi-pie-chart"></i> التقرير المالي الشامل</a>
+
+      {% if is_admin %}
+      <div class="nav-section">الإدارة</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('auth.list_users') }}"
+        href="{{ url_for('auth.list_users') }}"><i class="bi bi-person-badge"></i> المستخدمون والصلاحيات</a>
+      {% endif %}
+      <div style="height:30px"></div>
+    </aside>
+
+    <div class="flex-grow-1 main-wrap">
+      <nav class="topbar">
+        <div>
+          <button class="btn-toggle d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')"><i
+              class="bi bi-list"></i></button>
+          <span class="fw-bold text-secondary">{{ 'لوحة المدير' if is_admin else 'لوحة المشرف' }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          {% if is_admin %}<span class="badge-soft"><i class="bi bi-star-fill"></i> مدير النظام</span>{% endif %}
+          <a class="position-relative text-dark text-decoration-none"
+            href="{{ url_for('notifications.list_notifications') }}" title="الإشعارات">
+            <i class="bi bi-bell fs-5"></i>
+            {% if unread_count %}<span class="notif-dot">{{ unread_count }}</span>{% endif %}
+          </a>
+          <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle me-1"></i>{{ cur_user.full_name }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><span class="dropdown-item-text small text-secondary">@{{ cur_user.username }}</span></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
+                    class="bi bi-box-arrow-right me-1"></i> تسجيل الخروج</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <main class="container-fluid p-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div
+          class="alert alert-{{ cat if cat in ['success','danger','warning','info'] else 'info' }} alert-dismissible fade show shadow-sm">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% else %}
+  {% block auth_content %}{% endblock %}
+  {% endif %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}قيد جديد{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-plus-circle ms-2"></i> قيد جديد في حسابات المشروع</h3>
+<div class="alert alert-info small">
+  <i class="bi bi-info-circle"></i> يتم الاعتراف بالقيد وتخصيمه من ميزانية المشروع <strong>وقت التحصيل (للمدين) أو الدفع (للدائن)</strong>.
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="POST" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">المشروع *</label>
+        <select name="project_id" class="form-select" required>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">النوع *</label>
+        <select name="entry_type" class="form-select" required>
+          <option value="receivable">مدين (لنا - سيتم التحصيل)</option>
+          <option value="payable">دائن (علينا - سيتم الدفع)</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">التاريخ</label>
+        <input type="date" name="entry_date" class="form-control" value="{{ today }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">اسم الطرف *</label>
+        <input name="party_name" class="form-control" required placeholder="مثلاً: مورد الإسمنت - مؤسسة XYZ">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">المبلغ *</label>
+        <input type="number" step="0.001" min="0.001" name="amount" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">العملة</label>
+        <select name="currency_id" class="form-select">
+          {% for c in currencies %}<option value="{{ c.id }}">{{ c.code }} - {{ c.name_ar }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">الوصف</label>
+        <textarea name="description" class="form-control" rows="2"></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary"><i class="bi bi-save"></i> تسجيل القيد</button>
+        <a href="{{ url_for('accounts.project_accounts') }}" class="btn btn-secondary">رجوع</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

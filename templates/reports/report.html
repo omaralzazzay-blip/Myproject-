@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}التقارير{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="page-title mb-0"><i class="bi bi-file-earmark-bar-graph me-2"></i>التقرير {{ period_name }}</h4>
+  <div class="d-flex gap-2 flex-wrap align-items-center">
+    <form class="d-flex gap-1 flex-wrap" method="get" action="{{ url_for('reports.reports_home') }}">
+      <select class="form-select form-select-sm" name="period" style="max-width:130px">
+        {% for k, v in [('daily','يومي'),('weekly','أسبوعي'),('monthly','شهري'),('yearly','سنوي')] %}
+        <option value="{{ k }}" {{ 'selected' if period==k }}>{{ v }}</option>{% endfor %}
+      </select>
+      <input type="date" class="form-control form-control-sm" name="ref" value="{{ ref }}">
+      {% if is_admin %}
+      <select class="form-select form-select-sm" name="project_id" style="max-width:170px">
+        <option value="">كل المشاريع</option>
+        {% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if project_id==p.id }}>{{ p.name }}</option>{% endfor %}
+      </select>
+      <select class="form-select form-select-sm" name="phase_id" style="max-width:170px">
+        <option value="">كل المراحل</option>
+        {% for ph in phases %}<option value="{{ ph.id }}" {{ 'selected' if phase_id==ph.id }}>{{ ph.name }} ({{ ph.pname }})</option>{% endfor %}
+      </select>
+      {% endif %}
+      <button class="btn btn-sm btn-primary">عرض</button>
+    </form>
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('reports.reports_home', period=period, ref=ref, project_id=project_id or '', phase_id=phase_id or '', export='pdf') }}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+    <a class="btn btn-sm btn-outline-success" href="{{ url_for('reports.reports_home', period=period, ref=ref, project_id=project_id or '', phase_id=phase_id or '', export='xlsx') }}"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a>
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>طباعة</button>
+  </div>
+</div>
+
+<div class="alert alert-light border small">
+  <i class="bi bi-calendar-range me-1"></i>فترة التقرير: من <strong>{{ data.start }}</strong> إلى <strong>{{ data.end }}</strong>
+  {% if is_admin %}<span class="mx-2">|</span> كل القيم بالعملة المحلية — تُحسب فروق الصرف من المعادل المحلي مقابل المبلغ الأصلي.{% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#1e3a5f,#2c5282)">
+    <span>المصاريف</span><h4 class="mb-0 mt-1 small">{{ money(data.expenses) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#b45309,#92400e)">
+    <span>المسحوبات</span><h4 class="mb-0 mt-1 small">{{ money(data.withdrawals) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <span>إدخال مخازن (قيمة)</span><h4 class="mb-0 mt-1 small">{{ money(data.stock_in) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <span>صرف مخازن (قيمة)</span><h4 class="mb-0 mt-1 small">{{ money(data.stock_out) }}</h4></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card" style="background:linear-gradient(135deg,#0ea5a4,#0b8c8b)">
+    <span>ميزانية أُضيفت في الفترة</span><h4 class="mb-0 mt-1 small">{{ money(data.budget_added) }}</h4></div></div>
+</div>
+
+{% if is_admin %}
+<div class="card p-3 mb-3">
+  <h6 class="fw-bold mb-3"><i class="bi bi-filter-circle me-1"></i>تفاصيل النطاق المحدد (مشروع/مرحلة)</h6>
+  <div class="row text-center g-2">
+    <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">مصاريف النطاق</div>
+      <h5 class="text-danger mb-0">{{ money(data.exp_detail) }}</h5></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">مسحوبات النطاق</div>
+      <h5 class="text-warning mb-0">{{ money(data.wd_detail) }}</h5></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">إجمالي صرف النطاق</div>
+      <h5 class="text-primary mb-0">{{ money(data.exp_detail + data.wd_detail) }}</h5></div></div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card p-3 mb-3">
+  <h6 class="fw-bold mb-3"><i class="bi bi-list-ul me-1"></i>تفاصيل المعاملات (مصروفات ومسحوبات) في الفترة</h6>
+  <div class="table-responsive">
+  <table class="table table-sm table-hover mb-0">
+    <thead><tr><th>النوع</th><th>التاريخ</th><th>البيان</th><th>المشروع</th><th>المرحلة</th><th class="text-end">المبلغ (محلي)</th></tr></thead>
+    <tbody>
+    {% for r in data.rows %}
+      <tr>
+        <td>{% if r.kind=='مصروف' %}<span class="badge bg-danger">مصروف</span>{% else %}<span class="badge bg-warning text-dark">سحب</span>{% endif %}</td>
+        <td>{{ r.d }}</td><td>{{ r.txt or '—' }}</td>
+        <td>{{ r.project_name or '—' }}</td><td>{{ r.phase_name or '—' }}</td>
+        <td class="text-end fw-semibold">{{ money(r.amt) }}</td>
+      </tr>
+    {% else %}<tr><td colspan="6" class="text-center text-secondary py-3">لا توجد معاملات في الفترة</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="card p-3 mb-3">
+  <h6 class="fw-bold mb-3"><i class="bi bi-people me-1"></i>تقرير العمال (أيام الدوام والأجور بعد الخصومات) في الفترة</h6>
+  <div class="table-responsive">
+  <table class="table table-sm table-hover mb-0">
+    <thead><tr><th>العامل</th><th>النوع</th><th>المشروع/المرحلة</th><th>الأجر اليومي</th><th>الأيام</th><th>الإجمالي</th><th>خصومات</th><th>سحوبات</th><th class="text-end">الصافي</th></tr></thead>
+    <tbody>
+    {% for w in workers_report %}
+      <tr>
+        <td class="fw-semibold">{{ w.name }}</td><td>{{ w.type_name }}</td>
+        <td class="small">{{ w.project_name }} / {{ w.phase_name }}</td>
+        <td>{{ money(w.wage_per_day) }} {{ w.cur_code }}</td>
+        <td>{{ w.days }}</td>
+        <td>{{ money(w.gross) }}</td>
+        <td class="text-danger">{{ money(w.ded) }}</td>
+        <td class="text-warning">{{ money(w.wd) }}</td>
+        <td class="text-end fw-bold text-success">{{ money(w.net) }}</td>
+      </tr>
+    {% else %}<tr><td colspan="9" class="text-center text-secondary py-3">لا توجد بيانات عمال في الفترة</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="card p-3">
+  <h6 class="fw-bold mb-3"><i class="bi bi-archive me-1"></i>أرصدة المخازن الحالية</h6>
+  <div class="table-responsive">
+  <table class="table table-sm table-hover mb-0">
+    <thead><tr><th>المخزن</th><th>المادة</th><th class="text-end">الرصيد</th></tr></thead>
+    <tbody>
+    {% for b in balances %}
+      <tr><td>{{ b.warehouse_name }}</td><td>{{ b.material_name }}</td>
+      <td class="text-end">{{ money(b.balance) }} {{ b.unit_name }}</td></tr>
+    {% else %}<tr><td colspan="3" class="text-center text-secondary py-3">لا توجد بيانات</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

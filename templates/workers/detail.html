@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}بطاقة العامل - {{ item.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="page-title mb-1"><i class="bi bi-person-badge me-2"></i>{{ item.name }}</h4>
+    <span class="text-secondary small">{{ item.type_name }} • {{ item.project_name }} / {{ item.phase_name }} •
+      الأجر اليومي: <strong>{{ money(item.wage_per_day) }} {{ item.cur_code }}</strong> •
+      {% if item.status=='active' %}<span class="badge bg-success">نشط</span>{% else %}<span class="badge bg-secondary">موقوف</span>{% endif %}
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('workers.edit_worker', wid=item.id) }}"><i class="bi bi-pencil me-1"></i>تعديل</a>
+    <div class="btn-group">
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('workers.worker_detail', wid=item.id, month=prev_month) }}"><i class="bi bi-chevron-right"></i></a>
+      <span class="btn btn-sm btn-light align-self-center px-3">{{ month }}</span>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('workers.worker_detail', wid=item.id, month=next_month) }}"><i class="bi bi-chevron-left"></i></a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3"><div class="stat-card" style="background:linear-gradient(135deg,#1e3a5f,#2c5282)">
+    <span>أيام الدوام ({{ month }})</span><h3 class="mb-0 mt-1">{{ days }}</h3></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card" style="background:linear-gradient(135deg,#0ea5a4,#0b8c8b)">
+    <span>إجمالي الأجر (محلي)</span><h3 class="mb-0 mt-1 small">{{ money(gross_local) }}</h3></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#7f1d1d)">
+    <span>الخصومات + السحوبات (الشهر)</span><h3 class="mb-0 mt-1 small">{{ money(ded_month_local + wd_month_local) }}</h3></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card" style="background:linear-gradient(135deg,#047857,#065f46)">
+    <span>الإجمالي بعد الخصومات (الشهر)</span><h3 class="mb-0 mt-1 small">{{ money(net_month) }}</h3></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold text-primary mb-0"><i class="bi bi-calendar-check me-1"></i>أيام الدوام</h6>
+        <form method="post" action="{{ url_for('workers.add_attendance', wid=item.id) }}" class="d-flex gap-1">
+          <input type="date" class="form-control form-control-sm" name="work_date" value="{{ today }}" required>
+          <button class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i></button>
+        </form>
+      </div>
+      <div class="table-responsive" style="max-height:260px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>التاريخ</th><th>ملاحظة</th><th class="text-end"></th></tr></thead>
+        <tbody>
+        {% for a in attendance %}
+          <tr>
+            <td>{{ a.work_date }}</td><td class="text-secondary">{{ a.note or '—' }}</td>
+            <td class="text-end">
+              <form method="post" action="{{ url_for('workers.delete_attendance', wid=item.id, aid=a.id) }}" class="d-inline" onsubmit="return confirm('حذف هذا اليوم؟')">
+                <input type="hidden" name="month" value="{{ month }}">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+              </form>
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="3" class="text-center text-secondary py-3">لا توجد أيام دوام مسجلة لهذا الشهر</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card p-3 mb-3">
+      <h6 class="fw-bold text-danger mb-2"><i class="bi bi-dash-circle me-1"></i>الخصومات (الشهر)</h6>
+      <form method="post" action="{{ url_for('workers.add_deduction', wid=item.id) }}" class="d-flex gap-1 mb-2">
+        <input type="number" step="any" class="form-control form-control-sm" name="amount" placeholder="المبلغ" required>
+        <select class="form-select form-select-sm" name="currency_id" style="max-width:110px">
+          {% for c in currencies %}<option value="{{ c.id }}">{{ c.code }}</option>{% endfor %}
+        </select>
+        <input class="form-control form-control-sm" name="reason" placeholder="السبب">
+        <button class="btn btn-sm btn-danger"><i class="bi bi-plus-lg"></i></button>
+      </form>
+      <table class="table table-sm mb-0">
+        <tbody>{% for d in ded_month %}
+          <tr><td>{{ d.reason or 'خصم' }}</td><td class="text-end text-danger fw-semibold">{{ money(d.amount) }} {{ d.cur_code }}</td></tr>
+        {% else %}<tr><td colspan="2" class="text-center text-secondary">لا خصومات</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+    <div class="card p-3">
+      <h6 class="fw-bold text-warning mb-2"><i class="bi bi-cash-coin me-1"></i>سحوبات العامل (الشهر)</h6>
+      <form method="post" action="{{ url_for('workers.add_worker_withdrawal', wid=item.id) }}" class="d-flex gap-1 mb-2">
+        <input type="number" step="any" class="form-control form-control-sm" name="amount" placeholder="المبلغ" required>
+        <select class="form-select form-select-sm" name="currency_id" style="max-width:110px">
+          {% for c in currencies %}<option value="{{ c.id }}">{{ c.code }}</option>{% endfor %}
+        </select>
+        <input class="form-control form-control-sm" name="note" placeholder="ملاحظة">
+        <button class="btn btn-sm btn-warning"><i class="bi bi-plus-lg"></i></button>
+      </form>
+      <table class="table table-sm mb-0">
+        <tbody>{% for x in wd_month %}
+          <tr><td>{{ x.note or 'سحب' }}</td><td class="text-end text-warning fw-semibold">{{ money(x.amount) }} {{ x.cur_code }}</td></tr>
+        {% else %}<tr><td colspan="2" class="text-center text-secondary">لا سحوبات</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card p-3">
+      <h6 class="fw-bold mb-2"><i class="bi bi-calculator me-1"></i>ملخص الحساب (بالعملة المحلية)</h6>
+      <div class="row text-center g-2">
+        <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">إجمالي الأجر ({{ month }})</div>
+          <h5 class="text-primary mb-0">{{ money(gross_local) }}</h5></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">خصومات (الشهر)</div>
+          <h5 class="text-danger mb-0">{{ money(ded_month_local) }}</h5></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded-3 p-3"><div class="text-secondary small">سحوبات (الشهر)</div>
+          <h5 class="text-warning mb-0">{{ money(wd_month_local) }}</h5></div></div>
+        <div class="col-6 col-md-3"><div class="border rounded-3 p-3 border-success"><div class="text-secondary small">الصافي المستحق</div>
+          <h5 class="text-success mb-0">{{ money(net_month) }}</h5></div></div>
+      </div>
+      <div class="small text-secondary mt-3">
+        ملاحظة: الخصومات والسحوبات التراكمية الكلية (بدون تحديد شهر): خصومات {{ money(ded_all) }} + سحوبات {{ money(wd_all) }}.
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold text-primary mb-0"><i class="bi bi-arrow-left-right me-1"></i>المصروفات والمسحوبات على حساب العامل (صرف مواد / نقدي)</h6>
+        <span class="badge-soft">إجمالي: <strong>{{ money(worker_issues_total) }}</strong></span>
+      </div>
+      <div class="table-responsive" style="max-height:280px">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>المادة/النوع</th><th>الكمية</th><th>البيان</th><th class="text-end">المبلغ (محلي)</th></tr></thead>
+        <tbody>
+        {% for x in worker_issues %}
+          <tr>
+            <td>{{ x.issue_date }}</td>
+            <td>{% if x.issue_kind=='material' %}<span class="badge bg-info">صرف مواد</span>{% else %}<span class="badge bg-warning text-dark">نقدي</span>{% endif %}</td>
+            <td>{{ x.material_name or '—' }}{% if x.type_name %} <span class="type-chip">{{ x.type_name }}</span>{% endif %}</td>
+            <td>{% if x.quantity %}{{ money(x.quantity) }} {{ x.unit_name or '' }}{% else %}—{% endif %}</td>
+            <td class="small text-secondary">{{ x.description or '—' }}</td>
+            <td class="text-end fw-semibold text-danger">{{ money(x.total_local) }}</td>
+          </tr>
+        {% else %}<tr><td colspan="6" class="text-center text-secondary py-3">لا توجد مسحوبات على هذا العامل</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+      <div class="small text-secondary mt-2">
+        <i class="bi bi-info-circle me-1"></i>تُخفض هذه المبالغ تلقائياً من حساب العامل في قائمة الحسابات — <a href="{{ url_for('issues.list_issues') }}">تسجيل قيد صرف جديد</a>.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

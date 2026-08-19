@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مستخدم' if item else 'مستخدم جديد' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:680px">
+  <h5 class="page-title mb-4"><i class="bi bi-person-badge me-2"></i>{{ 'تعديل بيانات المستخدم' if item else 'إضافة مستخدم جديد' }}</h5>
+  <form method="post" action="{{ url_for('auth.edit_user', uid=item.id) if item else url_for('auth.add_user') }}">
+    {% if not item %}
+    <div class="mb-3"><label class="form-label">اسم المستخدم (لدخول النظام) *</label>
+      <input class="form-control" name="username" required></div>
+    {% endif %}
+    <div class="mb-3"><label class="form-label">الاسم الكامل *</label>
+      <input class="form-control" name="full_name" required value="{{ item.full_name if item else '' }}"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6"><label class="form-label">الدور</label>
+        <select class="form-select" name="role" {{ 'disabled' if item and item.id==cur_user.id }}>
+          <option value="supervisor" {{ 'selected' if item and item.role=='supervisor' }}>مشرف</option>
+          <option value="admin" {{ 'selected' if item and item.role=='admin' }}>مدير النظام</option>
+        </select>
+        {% if item and item.id==cur_user.id %}<input type="hidden" name="role" value="admin">{% endif %}</div>
+      <div class="col-md-6"><label class="form-label">المشروع المرتبط (للمشرف)</label>
+        <select class="form-select" name="project_id">
+          <option value="">— بدون —</option>
+          {% for p in projects %}<option value="{{ p.id }}" {{ 'selected' if item and item.project_id==p.id }}>{{ p.name }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-6"><label class="form-label">رقم الهاتف</label>
+        <input class="form-control" name="phone" value="{{ item.phone if item else '' }}"></div>
+      <div class="col-md-6"><label class="form-label">{{ 'كلمة مرور جديدة (اتركها فارغة للإبقاء)' if item else 'كلمة المرور *' }}</label>
+        <input type="password" class="form-control" name="password" {{ '' if item else 'required' }}></div>
+      {% if item %}
+      <div class="col-md-6 form-check form-switch mt-4">
+        <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {{ 'checked' if item.is_active }}>
+        <label class="form-check-label" for="isActive">حساب نشط</label>
+      </div>
+      {% endif %}
+    </div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('auth.list_users') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

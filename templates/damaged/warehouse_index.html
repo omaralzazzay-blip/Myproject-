@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}التالف في المخزن{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="fas fa-box-open ms-2"></i> التالف في مخزن: {{ wh.name }}</h3>
+  <a href="{{ url_for('materials_ext.damaged_add', wid=wh.id) }}" class="btn btn-danger"><i class="fas fa-plus"></i> تسجيل تالف جديد</a>
+</div>
+
+{% if items %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>التاريخ</th><th>المادة</th><th>النوع</th><th>الكمية</th><th>الوحدة</th><th>السبب</th><th>المُبلِّغ</th>
+      </tr></thead>
+      <tbody>
+        {% for d in items %}
+        <tr>
+          <td>{{ d.damaged_date }}</td>
+          <td><strong>{{ d.material_name }}</strong></td>
+          <td>{% if d.type_name %}<span class="badge bg-info text-dark">{{ d.type_name }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+          <td><span class="badge bg-danger">{{ '%0.3f'|format(d.quantity) }}</span></td>
+          <td>{{ d.unit_name }}</td>
+          <td>{{ d.reason or '-' }}</td>
+          <td>{{ d.reporter or '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">لا يوجد تالف مسجل في هذا المخزن.</div>
+{% endif %}
+
+<a href="{{ url_for('stock.warehouse_view', wid=wh.id) }}" class="btn btn-secondary mt-3"><i class="fas fa-arrow-right"></i> العودة للمخزن</a>
+{% endblock %}

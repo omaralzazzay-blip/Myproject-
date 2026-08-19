@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}حسابات المشروع (مدين/دائن){% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0"><i class="bi bi-bank ms-2"></i> حسابات المشروع (مدين / دائن)</h3>
+  <a href="{{ url_for('accounts.add_account_entry') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> قيد جديد</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card border-0 shadow-sm bg-warning-subtle">
+    <div class="card-body"><small class="text-muted">إجمالي لنا (مدين)</small>
+    <h4 class="mb-0 mt-1">{{ money(totals.receivable) }}</h4>
+    <small class="text-success">تم تحصيل {{ money(totals.received) }}</small></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm bg-danger-subtle">
+    <div class="card-body"><small class="text-muted">إجمالي علينا (دائن)</small>
+    <h4 class="mb-0 mt-1">{{ money(totals.payable) }}</h4>
+    <small class="text-success">تم دفع {{ money(totals.paid) }}</small></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm">
+    <div class="card-body"><small class="text-muted">المتبقي تحصيله</small>
+    <h4 class="mb-0 mt-1">{{ money(totals.receivable - totals.received) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card border-0 shadow-sm">
+    <div class="card-body"><small class="text-muted">المتبقي دفعه</small>
+    <h4 class="mb-0 mt-1">{{ money(remaining_to_be_deducted) }}</h4>
+    <small class="text-muted">سيُخصم من الميزانية لحظة الاعتراف</small></div></div></div>
+</div>
+
+<form method="GET" class="mb-3">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <select name="project_id" class="form-select" onchange="this.form.submit()">
+        <option value="">-- جميع المشاريع --</option>
+        {% for p in projects %}
+        <option value="{{ p.id }}" {% if selected_pid==p.id %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>التاريخ</th><th>المشروع</th><th>النوع</th><th>الطرف</th><th>الوصف</th>
+        <th>المبلغ</th><th>المحلي</th><th>معترف؟</th><th>تاريخ الاعتراف</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for it in items %}
+        <tr>
+          <td>{{ it.entry_date }}</td>
+          <td>{{ projects|selectattr('id','equalto',it.project_id)|first|attr('name') if projects|selectattr('id','equalto',it.project_id)|list else '-' }}</td>
+          <td>{% if it.entry_type=='receivable' %}<span class="badge bg-warning text-dark">مدين (لنا)</span>{% else %}<span class="badge bg-danger">دائن (علينا)</span>{% endif %}</td>
+          <td><strong>{{ it.party_name }}</strong></td>
+          <td>{{ it.description or '-' }}</td>
+          <td>{{ money(it.amount) }} {{ it.cur_code }}</td>
+          <td>{{ money(it.amount_local) }}</td>
+          <td>{% if it.is_recognized %}<span class="badge bg-success">نعم ({{ it.recognized_date }})</span>{% else %}<span class="badge bg-secondary">لا</span>{% endif %}</td>
+          <td>{{ it.recognized_date or '-' }}</td>
+          <td>
+            {% if not it.is_recognized %}
+            <form method="POST" action="{{ url_for('accounts.recognize_entry', eid=it.id) }}" style="display:inline" onsubmit="return confirm('الاعتراف بالقيد وخصمه من ميزانية المشروع؟')">
+              <input type="date" name="recognized_date" value="{{ today }}" class="form-control form-control-sm d-none">
+              <button class="btn btn-sm btn-success"><i class="bi bi-check2-circle"></i> الاعتراف</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('accounts.delete_account_entry', eid=it.id) }}" style="display:inline" onsubmit="return confirm('حذف؟')">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

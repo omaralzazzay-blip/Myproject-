@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل سحب{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:680px">
+  <h5 class="page-title mb-4"><i class="bi bi-cash-coin me-2"></i>تسجيل سحب جديد</h5>
+  <form method="post" action="{{ url_for('finance.add_withdrawal') }}">
+    {% if not is_admin %}<input type="hidden" name="project_id" value="{{ scope_pid }}">{% endif %}
+    <div class="row g-3 mb-3">
+      {% if is_admin %}
+      <div class="col-md-6"><label class="form-label">المشروع *</label>
+        <select class="form-select" name="project_id" required id="projSel">
+          <option value="">— اختر —</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select></div>
+      {% endif %}
+      <div class="col-md-6"><label class="form-label">المرحلة</label>
+        <select class="form-select" name="phase_id">
+          <option value="">— بدون مرحلة —</option>
+          {% for ph in phases %}<option value="{{ ph.id }}" data-pid="{{ ph.project_id }}">{{ ph.name }} ({{ ph.pname }})</option>{% endfor %}
+        </select></div>
+      <div class="col-md-12"><label class="form-label">البيان / الوصف</label>
+        <input class="form-control" name="description"></div>
+      <div class="col-md-4"><label class="form-label">المبلغ *</label>
+        <input type="number" step="any" class="form-control" name="amount" required></div>
+      <div class="col-md-4"><label class="form-label">العملة</label>
+        <select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if c.is_local }}>{{ c.code }} - {{ c.name_ar }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-4"><label class="form-label">التاريخ</label>
+        <input type="date" class="form-control" name="withdraw_date" value="{{ today }}"></div>
+    </div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('finance.list_withdrawals') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

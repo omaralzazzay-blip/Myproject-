@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل عامل' if item else 'عامل جديد' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:720px">
+  <h5 class="page-title mb-4"><i class="bi bi-person-plus me-2"></i>{{ 'تعديل بيانات العامل' if item else 'إضافة عامل جديد' }}</h5>
+  <form method="post" action="{{ url_for('workers.edit_worker', wid=item.id) if item else url_for('workers.add_worker') }}">
+    <div class="row g-3 mb-3">
+      <div class="col-md-6"><label class="form-label">اسم العامل *</label>
+        <input class="form-control" name="name" required value="{{ item.name if item else '' }}"></div>
+      <div class="col-md-6"><label class="form-label">رقم الهاتف</label>
+        <input class="form-control" name="phone" value="{{ item.phone if item else '' }}"></div>
+      {% if not item or is_admin %}
+      <div class="col-md-6"><label class="form-label">المرحلة *</label>
+        <select class="form-select" name="phase_id" required {{ 'disabled' if item and not is_admin }}>
+          {% for ph in phases %}<option value="{{ ph.id }}" {{ 'selected' if item and item.phase_id==ph.id }}>{{ ph.name }} ({{ ph.project_name }})</option>{% endfor %}
+        </select>
+        {% if item and not is_admin %}<input type="hidden" name="phase_id" value="{{ item.phase_id }}">{% endif %}</div>
+      {% endif %}
+      <div class="col-md-6"><label class="form-label">نوع العمالة *</label>
+        <select class="form-select" name="worker_type_id" required>
+          {% for t in types %}<option value="{{ t.id }}" {{ 'selected' if item and item.worker_type_id==t.id }}>{{ t.name_ar }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-6"><label class="form-label">الأجر اليومي *</label>
+        <input type="number" step="any" class="form-control" name="wage_per_day" required value="{{ item.wage_per_day if item else '' }}"></div>
+      <div class="col-md-6"><label class="form-label">عملة الأجر</label>
+        <select class="form-select" name="currency_id">
+          {% for c in currencies %}<option value="{{ c.id }}" {{ 'selected' if item and item.currency_id==c.id }}>{{ c.code }} - {{ c.name_ar }}</option>{% endfor %}
+        </select></div>
+      <div class="col-md-6"><label class="form-label">تاريخ الالتحاق</label>
+        <input type="date" class="form-control" name="joined_date" value="{{ item.joined_date if item else today }}"></div>
+      {% if item %}
+      <div class="col-md-6"><label class="form-label">الحالة</label>
+        <select class="form-select" name="status">
+          <option value="active" {{ 'selected' if item.status=='active' }}>نشط</option>
+          <option value="stopped" {{ 'selected' if item.status=='stopped' }}>موقوف</option>
+        </select></div>
+      {% endif %}
+    </div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    <a class="btn btn-light" href="{{ url_for('workers.list_workers') }}">إلغاء</a>
+  </form>
+</div>
+{% endblock %}

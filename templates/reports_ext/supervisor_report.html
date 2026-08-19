@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}تقرير المشرفين{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-person-badge ms-2"></i> تقرير المشرفين</h3>
+
+<form method="GET" class="card shadow-sm mb-4">
+  <div class="card-body row g-2">
+    <div class="col-md-4"><label>من</label><input type="date" name="start" value="{{ start }}" class="form-control"></div>
+    <div class="col-md-4"><label>إلى</label><input type="date" name="end" value="{{ end }}" class="form-control"></div>
+    <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary"><i class="bi bi-funnel"></i> تطبيق</button></div>
+  </div>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي المصروفات</small><h4>{{ money(totals.expenses) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي السحوبات</small><h4>{{ money(totals.withdrawals) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي أرصدة المشرفين</small><h4>{{ money(totals.balance) }}</h4></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><small>إجمالي قيمة التوريدات</small><h4>{{ money(totals.deliveries) }}</h4></div></div></div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr>
+        <th>الاسم</th><th>المستخدم</th><th>المشروع</th>
+        <th>المصروفات</th><th>السحوبات</th><th>حركات الحساب</th><th>رصيد الحساب</th>
+        <th>الصافي</th>
+      </tr></thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td><a href="{{ url_for('accounts.supervisor_account_view', uid=r.id) }}"><strong>{{ r.full_name }}</strong></a></td>
+          <td>{{ r.username }}</td>
+          <td>{{ r.project_name or '-' }}</td>
+          <td>{{ money(r.expenses) }}</td>
+          <td>{{ money(r.withdrawals) }}</td>
+          <td>+{{ money(r.acc_credits) }} / -{{ money(r.acc_debits) }}</td>
+          <td>
+            {% if r.balance>0 %}<span class="badge bg-success">{{ money(r.balance) }} دائن</span>
+            {% elif r.balance<0 %}<span class="badge bg-danger">{{ money(-r.balance) }} مدين</span>{% else %}0{% endif %}
+          </td>
+          <td class="fw-bold">{{ money(r.net) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مرحلة' if item else 'إضافة مرحلة' }}{% endblock %}
+{% block content %}
+<div class="card p-4" style="max-width:720px">
+  <h5 class="page-title mb-4"><i class="bi bi-layers me-2"></i>{{ 'تعديل المرحلة' if item else 'إضافة مرحلة جديدة' }}</h5>
+  <form method="post" action="{{ url_for('projects.edit_phase', phid=item.id) if item else url_for('projects.add_phase') }}">
+    {% if not item %}
+    <div class="mb-3"><label class="form-label">المشروع *</label>
+      <select class="form-select" name="project_id" required>
+        <option value="">— اختر المشروع —</option>
+        {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    <div class="mb-3"><label class="form-label">اسم المرحلة *</label>
+      <input class="form-control" name="name" required value="{{ item.name if item else '' }}"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4"><label class="form-label">تاريخ البدء</label>
+        <input type="date" class="form-control" name="start_date" value="{{ item.start_date if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">تاريخ الانتهاء</label>
+        <input type="date" class="form-control" name="end_date" value="{{ item.end_date if item else '' }}"></div>
+      <div class="col-md-4"><label class="form-label">الحالة</label>
+        <select class="form-select" name="status">
+          {% for v, lbl in [('planned','مخطط لها'),('active','نشطة'),('done','منتهية')] %}
+          <option value="{{ v }}" {{ 'selected' if item and item.status==v }}>{{ lbl }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="mb-3"><label class="form-label">وصف المرحلة</label>
+      <textarea class="form-control" rows="3" name="description">{{ item.description if item else '' }}</textarea></div>
+    <button class="btn btn-primary px-4">حفظ</button>
+    {% if item %}<a class="btn btn-light" href="{{ url_for('projects.view_project', pid=item.project_id) }}">إلغاء</a>{% endif %}
+  </form>
+</div>
+{% endblock %}

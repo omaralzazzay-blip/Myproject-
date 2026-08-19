@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}ملخص الحسابات{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-bank ms-2"></i> ملخص الحسابات الشامل</h3>
+<div class="row g-3">
+  <div class="col-md-6"><div class="card shadow-sm"><div class="card-header bg-warning"><strong>حسابات المشروع (مدين/دائن)</strong></div>
+    <div class="card-body">
+      {% set rec = pae_map.get('receivable') %}
+      {% set pay = pae_map.get('payable') %}
+      <p>مدين (لنا): <strong>{{ money(rec.tot if rec else 0) }}</strong>
+        <small class="text-muted">معترف {{ money(rec.rec_tot if rec else 0) }} / {{ rec.n if rec else 0 }} قيد</small></p>
+      <p>دائن (علينا): <strong>{{ money(pay.tot if pay else 0) }}</strong>
+        <small class="text-muted">معترف {{ money(pay.rec_tot if pay else 0) }} / {{ pay.n if pay else 0 }} قيد</small></p>
+      <p class="text-muted small">يتم الاعتراف وقت التحصيل/الدفع وخصم المُعترف من ميزانية المشروع.</p>
+    </div></div></div>
+  <div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-header bg-info text-white"><strong>الأرصدة الشخصية</strong></div>
+    <div class="card-body">
+      <p>إجمالي أرصدة العمال (صافي): <strong>{{ money(workers_total) }}</strong></p>
+      <p>إجمالي أرصدة المشرفين: <strong>{{ money(sups_total) }}</strong></p>
+      <p>إجمالي التالف (جميع المخازن): <strong>{{ '%0.2f'|format(damaged_total) }}</strong> وحدة</p>
+      <a href="{{ url_for('accounts.workers_accounts') }}" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-people"></i> حسابات العمال</a>
+      <a href="{{ url_for('accounts.supervisors_accounts') }}" class="btn btn-sm btn-outline-info mt-2"><i class="bi bi-person-badge"></i> حسابات المشرفين</a>
+      <a href="{{ url_for('accounts.project_accounts') }}" class="btn btn-sm btn-outline-warning mt-2"><i class="bi bi-bank"></i> حسابات المشروع</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
