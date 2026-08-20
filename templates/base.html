@@ -15,7 +15,7 @@
       --sidebar-w: 15%;
     }
     * { font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
-    body { background: var(--light); margin: 0; }
+    body { background: var(--light); margin: 0; overflow-x: hidden; }
     html { overflow-y: scroll; }
 
     #wrapper {
@@ -33,12 +33,13 @@
       color: #cfe0f0;
       position: fixed;
       top: 0;
-      right: 0; /* ثابتة على اليمين */
+      right: 0;
       bottom: 0;
       z-index: 1040;
       overflow-y: auto;
       box-shadow: -2px 0 10px rgba(0,0,0,0.1);
       transition: right 0.3s ease, box-shadow 0.3s ease;
+      will-change: right;
     }
 
     .sidebar .brand {
@@ -107,7 +108,6 @@
       top: 0;
       z-index: 1030;
     }
-
     .btn-toggle {
       display: none; /* مخفي في سطح المكتب */
     }
@@ -230,11 +230,58 @@
   {% if cur_user %}
   <div id="wrapper">
     <aside class="sidebar" id="sidebar">
-      <!-- محتوى القائمة (كما هو دون تغيير) -->
       <div class="brand"><i class="bi bi-buildings fs-4"></i><span>إدارة المشاريع<br><small class="text-white-50" style="font-size:.7rem">الإنشائية</small></span></div>
       <div class="nav-section">الرئيسية</div>
       <a class="nav-item {{ 'active' if request.endpoint=='dashboard.index' }}" href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
-      <!-- باقي الروابط ... (نفس ما كان) -->
+
+      <div class="nav-section">المشاريع</div>
+      <a class="nav-item {{ 'active' if request.endpoint in ['projects.list_projects','projects.view_project','projects.add_project','projects.edit_project'] }}" href="{{ url_for('projects.list_projects') }}"><i class="bi bi-kanban"></i> المشاريع</a>
+      {% if is_admin %}
+      <a class="nav-item" href="{{ url_for('projects.add_project') }}"><i class="bi bi-plus-circle"></i> مشروع جديد</a>
+      <a class="nav-item" href="{{ url_for('projects.add_phase') }}"><i class="bi bi-layers"></i> إضافة مرحلة</a>
+      {% endif %}
+      <a class="nav-item" href="{{ url_for('projects.add_warehouse') }}"><i class="bi bi-plus-square"></i> إضافة مخزن</a>
+
+      <div class="nav-section">الفهرس الثابت</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_materials') }}" href="{{ url_for('catalog.list_materials') }}"><i class="bi bi-box-seam"></i> المواد والأصناف</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_worker_types') }}" href="{{ url_for('catalog.list_worker_types') }}"><i class="bi bi-person-gear"></i> أنواع العمال</a>
+      {% if is_admin %}
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('catalog.list_currencies') }}" href="{{ url_for('catalog.list_currencies') }}"><i class="bi bi-currency-exchange"></i> العملات وأسعارها</a>
+      {% endif %}
+
+      <div class="nav-section">العمال</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('workers.') }}" href="{{ url_for('workers.list_workers') }}"><i class="bi bi-people"></i> سجل العمال</a>
+
+      <div class="nav-section">المالية والحسابات</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_budgets') }}" href="{{ url_for('finance.list_budgets') }}"><i class="bi bi-wallet2"></i> الميزانيات</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_expenses') }}" href="{{ url_for('finance.list_expenses') }}"><i class="bi bi-receipt"></i> المصاريف</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_withdrawals') }}" href="{{ url_for('finance.list_withdrawals') }}"><i class="bi bi-cash-coin"></i> المسحوبات</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('issues.') }}" href="{{ url_for('issues.list_issues') }}"><i class="bi bi-arrow-left-right"></i> المصروفات والمسحوبات (صرف)</a>
+      {% if is_admin %}
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_funders') }}" href="{{ url_for('finance.list_funders') }}"><i class="bi bi-bank"></i> الممولون</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('finance.list_suppliers') }}" href="{{ url_for('finance.list_suppliers') }}"><i class="bi bi-truck"></i> الموردون</a>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('accounts.') }}" href="{{ url_for('accounts.list_accounts') }}"><i class="bi bi-journal-text"></i> قائمة الحسابات (مدين/دائن)</a>
+      {% endif %}
+
+      <div class="nav-section">المخازن</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('stock.') }}" href="{{ url_for('stock.overview') }}"><i class="bi bi-archive"></i> المخازن والأرصدة والتالف</a>
+
+      <div class="nav-section">المرفقات</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('attachments.') }}" href="{{ url_for('attachments.list_attachments') }}"><i class="bi bi-paperclip"></i> الفواتير والمستندات والمخططات</a>
+
+      <div class="nav-section">التقارير</div>
+      <a class="nav-item {{ 'active' if request.endpoint=='reports.reports_home' }}" href="{{ url_for('reports.reports_home') }}"><i class="bi bi-file-earmark-bar-graph"></i> التقرير العام (د/أ/ش/س)</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.worker_report' }}" href="{{ url_for('reports.worker_report') }}"><i class="bi bi-person"></i> كشف حساب عامل</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.supervisor_report' }}" href="{{ url_for('reports.supervisor_report') }}"><i class="bi bi-person-badge"></i> كشف حساب مشرف</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.material_report' }}" href="{{ url_for('reports.material_report') }}"><i class="bi bi-box"></i> حركة مادة (رصيد/تالف)</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.damaged_report' }}" href="{{ url_for('reports.damaged_report') }}"><i class="bi bi-exclamation-triangle"></i> تقرير التالف</a>
+      <a class="nav-sub {{ 'active' if request.endpoint=='reports.financial_report' }}" href="{{ url_for('reports.financial_report') }}"><i class="bi bi-pie-chart"></i> التقرير المالي الشامل</a>
+
+      {% if is_admin %}
+      <div class="nav-section">الإدارة</div>
+      <a class="nav-item {{ 'active' if request.endpoint.startswith('auth.list_users') }}" href="{{ url_for('auth.list_users') }}"><i class="bi bi-person-badge"></i> المستخدمون والصلاحيات</a>
+      {% endif %}
+      <div style="height:30px"></div>
     </aside>
 
     <div class="flex-grow-1 main-wrap" id="mainWrap">
@@ -300,7 +347,8 @@
 
       function closeSidebar() {
         sidebar.classList.remove('show');
-        setMainMargin();
+        // نضبط الإزاحة بعد انتهاء الحركة لضمان الدقة
+        setTimeout(setMainMargin, 50);
       }
 
       function openSidebar() {
@@ -313,6 +361,7 @@
         setMainMargin();
       }
 
+      // زر التبديل
       if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
           e.stopPropagation();
@@ -320,6 +369,7 @@
         });
       }
 
+      // إغلاق القائمة عند النقر خارجها (هواتف)
       document.addEventListener('click', function(e) {
         if (window.innerWidth <= 991) {
           const isClickInsideSidebar = sidebar.contains(e.target);
@@ -330,6 +380,7 @@
         }
       });
 
+      // عند النقر على أي رابط داخل القائمة، نغلقها فوراً (لتفادي التداخل)
       sidebar.addEventListener('click', function(e) {
         const target = e.target.closest('a');
         if (target && target.href && target.href.indexOf('#') === -1 && target.href.indexOf('javascript:') === -1) {
@@ -337,10 +388,13 @@
         }
       });
 
-      // إيماءة السحب
+      // إيماءة السحب من حافة الشاشة
       let startX = 0;
+      let isSwiping = false;
+
       document.addEventListener('touchstart', function(e) {
         startX = e.touches[0].clientX;
+        isSwiping = false;
       }, { passive: true });
 
       document.addEventListener('touchmove', function(e) {
@@ -351,20 +405,25 @@
           const edgeThreshold = 40;
           const isFromRightEdge = startX > window.innerWidth - edgeThreshold;
           const isHidden = !sidebar.classList.contains('show');
+
           if (isFromRightEdge && isHidden && diffX < -20) {
             e.preventDefault();
             openSidebar();
+            isSwiping = true;
           } else if (sidebar.classList.contains('show') && diffX > 20) {
             e.preventDefault();
             closeSidebar();
+            isSwiping = true;
           }
         }
       }, { passive: false });
 
       document.addEventListener('touchend', function() {
         startX = 0;
+        isSwiping = false;
       }, { passive: true });
 
+      // عند تغيير حجم النافذة
       window.addEventListener('resize', function() {
         if (window.innerWidth > 991) {
           sidebar.classList.remove('show');
@@ -372,6 +431,12 @@
         setMainMargin();
       });
 
+      // بعد انتهاء انتقال القائمة، نعيد ضبط الإزاحة لضمان الدقة
+      sidebar.addEventListener('transitionend', function() {
+        setMainMargin();
+      });
+
+      // تهيئة أولية
       setMainMargin();
     });
   </script>
