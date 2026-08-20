@@ -24,7 +24,7 @@
       display: flex;
     }
 
-    /* ===== القائمة الجانبية (ثابتة على اليمين) ===== */
+    /* ===== القائمة الجانبية ===== */
     .sidebar {
       width: var(--sidebar-w);
       min-width: 200px;
@@ -40,7 +40,7 @@
       overflow-y: auto;
       box-shadow: -2px 0 10px rgba(0,0,0,0.1);
       transition: transform 0.3s ease;
-      transform: translateX(0) !important; /* ثابت على اليمين */
+      transform: translateX(0) !important;
     }
 
     .sidebar .brand {
@@ -92,7 +92,7 @@
     /* ===== المحتوى الرئيسي ===== */
     .main-wrap {
       flex: 1;
-      margin-right: var(--sidebar-w); /* إزاحة ثابتة بنفس عرض القائمة */
+      margin-right: 0; /* تُضبط بواسطة JS */
       transition: margin-right 0.3s ease;
       min-height: 100vh;
     }
@@ -156,10 +156,10 @@
       }
 
       .sidebar {
-        width: 35%;
+        width: 15%;
         min-width: 200px;
         max-width: 300px;
-        transform: translateX(100%) !important; /* مخفية */
+        transform: translateX(100%) !important;
         box-shadow: none;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
@@ -167,10 +167,6 @@
       .sidebar.show {
         transform: translateX(0) !important;
         box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-      }
-
-      .main-wrap {
-        margin-right: 0 !important; /* في الهاتف الإزاحة تُضبط بواسطة JS */
       }
 
       .sidebar .nav-item,
@@ -236,7 +232,6 @@
   {% if cur_user %}
   <div id="wrapper">
     <aside class="sidebar" id="sidebar">
-      <!-- محتوى القائمة الجانبية (كما هو دون تغيير) -->
       <div class="brand"><i class="bi bi-buildings fs-4"></i><span>إدارة المشاريع<br><small class="text-white-50" style="font-size:.7rem">الإنشائية</small></span></div>
       <div class="nav-section">الرئيسية</div>
       <a class="nav-item {{ 'active' if request.endpoint=='dashboard.index' }}" href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i> لوحة التحكم</a>
@@ -336,128 +331,120 @@
   {% endif %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const mainWrap = document.getElementById('mainWrap');
+      const toggleBtn = document.getElementById('toggleSidebarBtn');
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const mainWrap = document.getElementById('mainWrap');
-    const toggleBtn = document.getElementById('toggleSidebarBtn');
-
-    // دالة ضبط الإزاحة في الهواتف فقط
-    function adjustMobileMargin() {
-      if (window.innerWidth <= 991) {
-        if (sidebar.classList.contains('show')) {
-          mainWrap.style.marginRight = sidebar.offsetWidth + 'px';
+      // دالة ضبط الإزاحة بدقة في جميع الأحجام
+      function setMainMargin() {
+        if (window.innerWidth <= 991) {
+          // في الهواتف: الإزاحة = عرض القائمة إذا كانت ظاهرة، وإلا 0
+          if (sidebar.classList.contains('show')) {
+            mainWrap.style.marginRight = sidebar.offsetWidth + 'px';
+          } else {
+            mainWrap.style.marginRight = '0';
+          }
         } else {
-          mainWrap.style.marginRight = '0';
-        }
-      } else {
-        mainWrap.style.marginRight = '';
-      }
-    }
-
-    // إغلاق القائمة
-    function closeSidebar() {
-      sidebar.classList.remove('show');
-      adjustMobileMargin();
-    }
-
-    // فتح القائمة
-    function openSidebar() {
-      sidebar.classList.add('show');
-      adjustMobileMargin();
-    }
-
-    // تبديل الحالة
-    function toggleSidebar() {
-      sidebar.classList.toggle('show');
-      adjustMobileMargin();
-    }
-
-    // زر التبديل
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        toggleSidebar();
-      });
-    }
-
-    // إغلاق القائمة عند النقر خارجها (هواتف)
-    document.addEventListener('click', function(e) {
-      if (window.innerWidth <= 991) {
-        const isClickInsideSidebar = sidebar.contains(e.target);
-        const isClickOnToggle = toggleBtn && toggleBtn.contains(e.target);
-        if (!isClickInsideSidebar && !isClickOnToggle) {
-          closeSidebar();
+          // في سطح المكتب: الإزاحة = عرض القائمة الفعلي (ثابتة)
+          mainWrap.style.marginRight = sidebar.offsetWidth + 'px';
         }
       }
-    });
 
-    // **المفتاح**: عند النقر على أي رابط داخل القائمة، نغلق القائمة فوراً
-    sidebar.addEventListener('click', function(e) {
-      const target = e.target.closest('a');
-      if (target && target.href) {
-        // إذا كان الرابط يشير إلى صفحة داخلية (وليس # أو void)
-        if (target.href.indexOf('#') === -1 && target.href.indexOf('javascript:') === -1) {
-          // نغلق القائمة قبل الانتقال
-          closeSidebar();
-          // نترك المتصفح يكمل التنقل بشكل طبيعي
-        }
-      }
-    });
-
-    // ===== إيماءة السحب من حافة الشاشة (محسّنة) =====
-    let startX = 0;
-    let isSwiping = false;
-
-    document.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      isSwiping = false;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', function(e) {
-      if (!startX) return;
-      const touch = e.touches[0];
-      const diffX = touch.clientX - startX;
-
-      // فقط إذا كانت الحركة أفقية بشكل واضح (أكثر من 10px)
-      if (Math.abs(diffX) > 10) {
-        const edgeThreshold = 40;
-        const isFromRightEdge = startX > window.innerWidth - edgeThreshold;
-        const isHidden = !sidebar.classList.contains('show');
-
-        if (isFromRightEdge && isHidden && diffX < -20) {
-          e.preventDefault(); // نمنع التمرير فقط عند السحب لفتح
-          openSidebar();
-          isSwiping = true;
-        } else if (sidebar.classList.contains('show') && diffX > 20) {
-          e.preventDefault(); // نمنع التمرير فقط عند السحب لإغلاق
-          closeSidebar();
-          isSwiping = true;
-        }
-        // إذا لم تكن الحالة السابقة، لا نمنع الحدث الافتراضي
-      }
-    }, { passive: false });
-
-    document.addEventListener('touchend', function() {
-      startX = 0;
-      isSwiping = false;
-    }, { passive: true });
-
-    // عند تغيير حجم النافذة
-    window.addEventListener('resize', function() {
-      if (window.innerWidth > 991) {
+      // إغلاق القائمة
+      function closeSidebar() {
         sidebar.classList.remove('show');
-        mainWrap.style.marginRight = '';
-      } else {
-        adjustMobileMargin();
+        setMainMargin();
       }
-    });
 
-    // تهيئة أولية
-    adjustMobileMargin();
-  });
-</script>
+      // فتح القائمة
+      function openSidebar() {
+        sidebar.classList.add('show');
+        setMainMargin();
+      }
+
+      // تبديل الحالة
+      function toggleSidebar() {
+        sidebar.classList.toggle('show');
+        setMainMargin();
+      }
+
+      // زر التبديل
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleSidebar();
+        });
+      }
+
+      // إغلاق القائمة عند النقر خارجها (هواتف)
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 991) {
+          const isClickInsideSidebar = sidebar.contains(e.target);
+          const isClickOnToggle = toggleBtn && toggleBtn.contains(e.target);
+          if (!isClickInsideSidebar && !isClickOnToggle) {
+            closeSidebar();
+          }
+        }
+      });
+
+      // عند النقر على أي رابط داخل القائمة، نغلقها فوراً (لتفادي التداخل)
+      sidebar.addEventListener('click', function(e) {
+        const target = e.target.closest('a');
+        if (target && target.href && target.href.indexOf('#') === -1 && target.href.indexOf('javascript:') === -1) {
+          closeSidebar();
+        }
+      });
+
+      // ===== إيماءة السحب من حافة الشاشة (محسّنة) =====
+      let startX = 0;
+      let isSwiping = false;
+
+      document.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        isSwiping = false;
+      }, { passive: true });
+
+      document.addEventListener('touchmove', function(e) {
+        if (!startX) return;
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX;
+
+        if (Math.abs(diffX) > 10) {
+          const edgeThreshold = 40;
+          const isFromRightEdge = startX > window.innerWidth - edgeThreshold;
+          const isHidden = !sidebar.classList.contains('show');
+
+          if (isFromRightEdge && isHidden && diffX < -20) {
+            e.preventDefault();
+            openSidebar();
+            isSwiping = true;
+          } else if (sidebar.classList.contains('show') && diffX > 20) {
+            e.preventDefault();
+            closeSidebar();
+            isSwiping = true;
+          }
+        }
+      }, { passive: false });
+
+      document.addEventListener('touchend', function() {
+        startX = 0;
+        isSwiping = false;
+      }, { passive: true });
+
+      // عند تغيير حجم النافذة
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 991) {
+          sidebar.classList.remove('show');
+        }
+        setMainMargin();
+      });
+
+      // تهيئة أولية
+      setMainMargin();
+    });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
