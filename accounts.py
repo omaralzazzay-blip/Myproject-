@@ -19,6 +19,7 @@ ACC_LABEL = {'project': ('مشروع رئيسي', 'primary'), 'worker': ('عام
 @require_roles('admin', 'supervisor')
 def list_accounts():
     spid = scope_project_id()
+    tp = request.args.get('type')
     sql = """SELECT a.*, p.name AS project_name FROM accounts a JOIN projects p ON p.id=a.project_id WHERE 1=1"""
     params = []
     if spid:
