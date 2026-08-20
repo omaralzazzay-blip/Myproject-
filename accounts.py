@@ -19,25 +19,38 @@ ACC_LABEL = {'project': ('مشروع رئيسي', 'primary'), 'worker': ('عام
 @require_roles('admin', 'supervisor')
 def list_accounts():
     spid = scope_project_id()
-    tp = request.args.get('type')
-    sql = """SELECT a.*, p.name AS project_name FROM accounts a JOIN projects p ON p.id=a.project_id WHERE 1=1"""
+    tp = request.args.get('type')   # <-- تعريف المتغير tp
+
+    sql = """SELECT a.*, p.name AS project_name 
+             FROM accounts a 
+             JOIN projects p ON p.id = a.project_id 
+             WHERE 1=1"""
     params = []
+
     if spid:
-        sql += """ ORDER BY a.project_id, 
-          CASE a.acc_type 
-              WHEN 'project' THEN 1
-              WHEN 'creditor' THEN 2
-              WHEN 'debtor' THEN 3
-              WHEN 'worker' THEN 4
-              WHEN 'supervisor' THEN 5
-              ELSE 6
-          END, a.name"""
-    if tp in ACC_LABEL:
-        sql += " AND a.acc_type=%s"; params.append(tp)
-    sql += " ORDER BY a.project_id, FIELD(a.acc_type,'project','creditor','debtor','worker','supervisor'), a.name"
+        sql += " AND a.project_id = %s"
+        params.append(spid)
+
+    if tp and tp in ACC_LABEL:
+        sql += " AND a.acc_type = %s"
+        params.append(tp)
+
+    # ORDER BY باستخدام CASE بدلاً من FIELD (متوافق مع SQLite)
+    sql += """ ORDER BY a.project_id, 
+              CASE a.acc_type 
+                  WHEN 'project' THEN 1
+                  WHEN 'creditor' THEN 2
+                  WHEN 'debtor' THEN 3
+                  WHEN 'worker' THEN 4
+                  WHEN 'supervisor' THEN 5
+                  ELSE 6
+              END, a.name"""
+
     rows = db_query(sql, params)
+
     for r in rows:
         r['balance'] = account_balance(r['id'])
+
     totals = {}
     for r in rows:
         t = totals.setdefault(r['project_id'], {'name': r['project_name'], 'debit': 0, 'credit': 0})
@@ -45,8 +58,10 @@ def list_accounts():
             t['credit'] += r['balance']
         elif r['acc_type'] == 'debtor':
             t['debit'] += r['balance']
+
     return render_template('accounts/list.html', items=rows, totals=totals,
                            acc_label=ACC_LABEL, tp=tp or '')
+
 
 
 @accounts_bp.route('/accounts/add', methods=['GET', 'POST'])
