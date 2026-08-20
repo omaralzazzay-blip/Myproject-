@@ -324,6 +324,87 @@
         margin-right: 0;
       }
     }
+  /* ================================================================ */
+/* تعديلات التجاوب وإزاحة المحتوى وتصغير القائمة */
+/* ================================================================ */
+@media (max-width: 991px) {
+  /* 1. إخفاء القائمة وإعادة ضبط عرضها */
+  .sidebar {
+    position: fixed !important;
+    width: 220px !important;
+    right: -230px !important; /* إخفاءها خارج الشاشة */
+    transition: right 0.3s ease, transform 0.3s ease !important;
+  }
+  
+  /* عند فتح القائمة */
+  .sidebar.show {
+    right: 0 !important;
+  }
+
+  /* 2. تعديل المحتوى الرئيسي ليتم إزاحته ولا يغطى */
+  .main-wrap {
+    margin-right: 0 !important;
+    transition: margin-right 0.3s ease !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 3. إضافة المساحة المزاحة عند فتح القائمة */
+  .sidebar.show ~ .main-wrap {
+    margin-right: 220px !important; /* إزاحة مساوية لعرض القائمة */
+  }
+
+  /* 4. تصغير عناصر القائمة لتتناسب مع الشاشة الصغيرة */
+  .sidebar .nav-item, 
+  .sidebar .nav-sub {
+    font-size: 0.8rem !important;
+    padding: 6px 12px !important;
+  }
+  .sidebar .brand {
+    font-size: 0.9rem !important;
+    padding: 12px !important;
+  }
+  .sidebar .nav-section {
+    font-size: 0.65rem !important;
+    padding: 10px 12px 2px !important;
+  }
+  .sidebar .brand small {
+    font-size: 0.6rem !important;
+  }
+}
+
+/* شاشات الهواتف الصغيرة جداً (أقل من 576px) */
+@media (max-width: 576px) {
+  /* تصغير القائمة أكثر */
+  .sidebar {
+    width: 180px !important;
+    right: -190px !important;
+  }
+  .sidebar.show ~ .main-wrap {
+    margin-right: 180px !important;
+  }
+  
+  /* تصغير عناصر المحتوى الرئيسي (بطاقات الإحصائيات - الجدول) */
+  main {
+    padding: 10px !important;
+  }
+  .stat-card {
+    padding: 10px !important;
+    font-size: 0.85rem !important;
+  }
+  .stat-card .bi {
+    font-size: 1.4rem !important;
+  }
+  .topbar {
+    padding: 5px 10px !important;
+  }
+  .topbar .btn-toggle {
+    font-size: 1.2rem !important;
+  }
+  .topbar .fw-bold {
+    font-size: 0.9rem !important;
+  }
+}
   </style>
 </head>
 
@@ -461,6 +542,55 @@
   {% block auth_content %}{% endblock %}
   {% endif %}
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.querySelector('.btn-toggle');
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+
+    // 1. تفعيل إيماءة السحب من حافة الشاشة
+    document.addEventListener('touchstart', function(e) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isDragging = false; // نبدأ بدون سحب
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+        if (!startX) return;
+        const touch = e.touches[0];
+        const currentX = touch.clientX;
+        const diffX = currentX - startX;
+        const diffY = touch.clientY - startY;
+
+        // التأكد من أن الحركة أفقية وليست رأسية (Scroll)
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            e.preventDefault(); // منع تمرير الصفحة أثناء السحب الجانبي
+            isDragging = true;
+
+            // إذا كانت القائمة مغلقة وتم السحب من الحافة اليمنى (منطقة الشاشة اليمنى)
+            if (!sidebar.classList.contains('show') && startX > window.innerWidth - 40) {
+                if (diffX < -30) { // السحب لليسار
+                    sidebar.classList.add('show');
+                }
+            }
+            // إذا كانت القائمة مفتوحة وتم السحب لليسار
+            else if (sidebar.classList.contains('show') && diffX > 30) {
+                sidebar.classList.remove('show');
+            }
+        }
+    }, { passive: false });
+
+    // 2. زر التبديل العادي للجوال (الهامبرغر)
+    if(toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+        });
+    }
+});
+</script>
   {% block scripts %}{% endblock %}
 </body>
 
