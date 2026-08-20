@@ -9,119 +9,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    .sidebar {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      bottom: 0 !important;
-      width: 250px !important;
-      height: 100vh !important;
-      overflow-y: auto !important;
-      background-color: #f8f9fa !important;
-      border-right: 1px solid #dee2e6 !important;
-      padding-top: 70px !important;
-      z-index: 1000 !important;
-      scrollbar-width: thin;
-      scrollbar-color: #c1c1c1 transparent;
-    }
-
-    .sidebar::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .sidebar::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb {
-      background-color: #c1c1c1;
-      border-radius: 10px;
-    }
-
-    .sidebar::-webkit-scrollbar-thumb:hover {
-      background-color: #a0a0a0;
-    }
-
-    .sidebar .nav-link {
-      color: #333;
-      border-radius: 0.375rem;
-      padding: 0.6rem 0.75rem;
-      transition: background 0.2s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .sidebar .nav-link:hover {
-      background: #e9ecef;
-    }
-
-    .sidebar .nav-link.active {
-      background: #0d6efd;
-      color: #fff;
-    }
-
-    .sidebar .nav-link .badge {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.5rem;
-    }
-
-    /* ================================================================ */
-    /* بطاقات الإحصائيات */
-    /* ================================================================ */
-    .stat-card {
-      color: #fff;
-      padding: 1rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    /* ================================================================ */
-    /* المحتوى الرئيسي */
-    /* ================================================================ */
-    main {
-      margin-left: 250px !important;
-      width: calc(100% - 250px) !important;
-      max-width: calc(100% - 250px) !important;
-      flex: 0 0 auto !important;
-      padding-top: 20px !important;
-    }
-
-    /* ================================================================ */
-    /* الشاشات الصغيرة */
-    /* ================================================================ */
-    @media (max-width: 767.98px) {
-      .sidebar {
-        display: none !important;
-      }
-
-      main {
-        margin-left: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding-top: 60px !important;
-      }
-
-      .d-md-none {
-        display: block !important;
-        position: fixed !important;
-        top: 65px !important;
-        left: 10px !important;
-        z-index: 1050 !important;
-      }
-    }
-
-    .offcanvas-body {
-      overflow-y: auto !important;
-      max-height: 80vh !important;
-    }
-
     :root {
       --primary: #1e3a5f;
       --accent: #0ea5a4;
       --light: #f4f7fb;
-      --sidebar-w: 255px;
+      --sidebar-w: 15%; /* نسبة مئوية مع حدود دنيا وقصوى */
     }
 
     * {
@@ -130,23 +22,35 @@
 
     body {
       background: var(--light);
+      margin: 0;
+    }
+
+    html {
+      overflow-y: scroll;
     }
 
     #wrapper {
       min-height: 100vh;
+      display: flex;
     }
 
+    /* ========== القائمة الجانبية ========== */
     .sidebar {
       width: var(--sidebar-w);
-      background: linear-gradient(180deg, #16283f, #1e3a5f);
+      min-width: 200px;
+      max-width: 320px;
       min-height: 100vh;
-      position: fixed;
-      right: 0;
-      top: 0;
-      z-index: 1040;
+      background: linear-gradient(180deg, #16283f, #1e3a5f);
       color: #cfe0f0;
-      transition: .25s;
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1040;
       overflow-y: auto;
+      transition: transform 0.3s ease;
+      transform: translateX(0);
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     }
 
     .sidebar .brand {
@@ -203,6 +107,16 @@
       color: #fff;
     }
 
+    /* ========== المحتوى الرئيسي ========== */
+    .main-wrap {
+      flex: 1;
+      margin-right: 0; /* يتم ضبطه عبر JavaScript ديناميكياً */
+      transition: margin-right 0.3s ease;
+      min-height: 100vh;
+      width: auto; /* يمنع الفائض */
+    }
+
+    /* ========== الشريط العلوي ========== */
     .topbar {
       background: #fff;
       border-bottom: 1px solid #e5eaf0;
@@ -220,18 +134,10 @@
       border: none;
       font-size: 1.4rem;
       color: var(--primary);
+      display: none;
     }
 
-    .main-wrap {
-      margin-right: var(--sidebar-w);
-    }
-
-    .card {
-      border: 0;
-      border-radius: 14px;
-      box-shadow: 0 2px 10px rgba(20, 40, 80, .06);
-    }
-
+    /* ========== البطاقات ========== */
     .stat-card {
       border-radius: 14px;
       color: #fff;
@@ -256,10 +162,6 @@
       color: #33475c;
       font-size: .8rem;
       white-space: nowrap;
-    }
-
-    .table td {
-      vertical-align: middle;
     }
 
     .page-title {
@@ -288,6 +190,81 @@
       padding: 1px 5px;
     }
 
+    /* ========== شاشات متوسطة وصغيرة (هاتف) ========== */
+    @media (max-width: 991px) {
+      .btn-toggle {
+        display: inline-block;
+      }
+
+      .sidebar {
+        width: 35%;
+        min-width: 200px;
+        max-width: 300px;
+        transform: translateX(100%);
+        box-shadow: none;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .sidebar .nav-item,
+      .sidebar .nav-sub {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+
+      .sidebar .brand {
+        font-size: 0.9rem;
+        padding: 12px;
+      }
+
+      .sidebar .nav-section {
+        font-size: 0.65rem;
+        padding: 10px 12px 2px;
+      }
+
+      .sidebar .brand small {
+        font-size: 0.6rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .sidebar {
+        width: 35%;
+        min-width: 160px;
+        max-width: 260px;
+      }
+
+      main {
+        padding: 10px !important;
+      }
+
+      .stat-card {
+        padding: 10px !important;
+        font-size: 0.85rem !important;
+      }
+
+      .stat-card .bi {
+        font-size: 1.4rem !important;
+      }
+
+      .topbar {
+        padding: 5px 10px !important;
+      }
+
+      .topbar .btn-toggle {
+        font-size: 1.2rem !important;
+      }
+
+      .topbar .fw-bold {
+        font-size: 0.9rem !important;
+      }
+    }
+
+    /* ========== إضافات أخرى ========== */
     .auth-wrap {
       min-height: 100vh;
       display: flex;
@@ -311,100 +288,20 @@
       margin: 1px;
     }
 
-    @media (max-width: 991px) {
-      .sidebar {
-        right: -260px;
-      }
-
-      .sidebar.show {
-        right: 0;
-      }
-
-      .main-wrap {
-        margin-right: 0;
-      }
+    /* شريط تمرير القائمة */
+    .sidebar::-webkit-scrollbar {
+      width: 5px;
     }
-  /* ================================================================ */
-/* تعديلات التجاوب وإزاحة المحتوى وتصغير القائمة */
-/* ================================================================ */
-@media (max-width: 991px) {
-  /* 1. إخفاء القائمة وإعادة ضبط عرضها */
-  .sidebar {
-    position: fixed !important;
-    width: 220px !important;
-    right: -230px !important; /* إخفاءها خارج الشاشة */
-    transition: right 0.3s ease, transform 0.3s ease !important;
-  }
-  
-  /* عند فتح القائمة */
-  .sidebar.show {
-    right: 0 !important;
-  }
-
-  /* 2. تعديل المحتوى الرئيسي ليتم إزاحته ولا يغطى */
-  .main-wrap {
-    margin-right: 0 !important;
-    transition: margin-right 0.3s ease !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* 3. إضافة المساحة المزاحة عند فتح القائمة */
-  .sidebar.show ~ .main-wrap {
-    margin-right: 220px !important; /* إزاحة مساوية لعرض القائمة */
-  }
-
-  /* 4. تصغير عناصر القائمة لتتناسب مع الشاشة الصغيرة */
-  .sidebar .nav-item, 
-  .sidebar .nav-sub {
-    font-size: 0.8rem !important;
-    padding: 6px 12px !important;
-  }
-  .sidebar .brand {
-    font-size: 0.9rem !important;
-    padding: 12px !important;
-  }
-  .sidebar .nav-section {
-    font-size: 0.65rem !important;
-    padding: 10px 12px 2px !important;
-  }
-  .sidebar .brand small {
-    font-size: 0.6rem !important;
-  }
-}
-
-/* شاشات الهواتف الصغيرة جداً (أقل من 576px) */
-@media (max-width: 576px) {
-  /* تصغير القائمة أكثر */
-  .sidebar {
-    width: 180px !important;
-    right: -190px !important;
-  }
-  .sidebar.show ~ .main-wrap {
-    margin-right: 180px !important;
-  }
-  
-  /* تصغير عناصر المحتوى الرئيسي (بطاقات الإحصائيات - الجدول) */
-  main {
-    padding: 10px !important;
-  }
-  .stat-card {
-    padding: 10px !important;
-    font-size: 0.85rem !important;
-  }
-  .stat-card .bi {
-    font-size: 1.4rem !important;
-  }
-  .topbar {
-    padding: 5px 10px !important;
-  }
-  .topbar .btn-toggle {
-    font-size: 1.2rem !important;
-  }
-  .topbar .fw-bold {
-    font-size: 0.9rem !important;
-  }
-}
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+    }
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.4);
+    }
   </style>
 </head>
 
@@ -492,11 +389,10 @@
       <div style="height:30px"></div>
     </aside>
 
-    <div class="flex-grow-1 main-wrap">
+    <div class="flex-grow-1 main-wrap" id="mainWrap">
       <nav class="topbar">
         <div>
-          <button class="btn-toggle d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')"><i
-              class="bi bi-list"></i></button>
+          <button class="btn-toggle" id="toggleSidebarBtn"><i class="bi bi-list"></i></button>
           <span class="fw-bold text-secondary">{{ 'لوحة المدير' if is_admin else 'لوحة المشرف' }}</span>
         </div>
         <div class="d-flex align-items-center gap-3">
@@ -541,56 +437,124 @@
   {% else %}
   {% block auth_content %}{% endblock %}
   {% endif %}
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.querySelector('.btn-toggle');
-    let startX = 0;
-    let startY = 0;
-    let isDragging = false;
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const mainWrap = document.getElementById('mainWrap');
+      const toggleBtn = document.getElementById('toggleSidebarBtn');
 
-    // 1. تفعيل إيماءة السحب من حافة الشاشة
-    document.addEventListener('touchstart', function(e) {
+      // دالة لحساب عرض القائمة الفعلي وتطبيقه كـ margin-right على main-wrap
+      function setMainMargin() {
+        // في سطح المكتب، القائمة دائماً ظاهرة، لذا نأخذ عرضها الفعلي
+        // في الهواتف، إذا كانت القائمة مطوية (لا تحوي class 'show')، margin-right = 0
+        if (window.innerWidth <= 991) {
+          if (sidebar.classList.contains('show')) {
+            const sidebarWidth = sidebar.offsetWidth;
+            mainWrap.style.marginRight = sidebarWidth + 'px';
+          } else {
+            mainWrap.style.marginRight = '0';
+          }
+        } else {
+          // سطح المكتب: القائمة ظاهرة دائماً، نأخذ عرضها الفعلي
+          const sidebarWidth = sidebar.offsetWidth;
+          mainWrap.style.marginRight = sidebarWidth + 'px';
+        }
+      }
+
+      // تبديل حالة القائمة (فتح/غلق) مع تحديث الإزاحة
+      function toggleSidebar() {
+        sidebar.classList.toggle('show');
+        setMainMargin();
+      }
+
+      function openSidebar() {
+        sidebar.classList.add('show');
+        setMainMargin();
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('show');
+        setMainMargin();
+      }
+
+      // زر التبديل
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          toggleSidebar();
+        });
+      }
+
+      // إغلاق القائمة عند النقر خارجها (فقط في الهواتف)
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 991) {
+          const isClickInsideSidebar = sidebar.contains(e.target);
+          const isClickOnToggle = toggleBtn && toggleBtn.contains(e.target);
+          if (!isClickInsideSidebar && !isClickOnToggle) {
+            closeSidebar();
+          }
+        }
+      });
+
+      // إيماءة السحب من حافة الشاشة (الهواتف)
+      let startX = 0;
+      let startY = 0;
+      let isSwiping = false;
+
+      document.addEventListener('touchstart', function(e) {
         const touch = e.touches[0];
         startX = touch.clientX;
         startY = touch.clientY;
-        isDragging = false; // نبدأ بدون سحب
-    }, { passive: true });
+        isSwiping = false;
+      }, { passive: true });
 
-    document.addEventListener('touchmove', function(e) {
+      document.addEventListener('touchmove', function(e) {
         if (!startX) return;
         const touch = e.touches[0];
-        const currentX = touch.clientX;
-        const diffX = currentX - startX;
+        const diffX = touch.clientX - startX;
         const diffY = touch.clientY - startY;
 
-        // التأكد من أن الحركة أفقية وليست رأسية (Scroll)
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            e.preventDefault(); // منع تمرير الصفحة أثناء السحب الجانبي
-            isDragging = true;
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+          e.preventDefault();
+          isSwiping = true;
 
-            // إذا كانت القائمة مغلقة وتم السحب من الحافة اليمنى (منطقة الشاشة اليمنى)
-            if (!sidebar.classList.contains('show') && startX > window.innerWidth - 40) {
-                if (diffX < -30) { // السحب لليسار
-                    sidebar.classList.add('show');
-                }
-            }
-            // إذا كانت القائمة مفتوحة وتم السحب لليسار
-            else if (sidebar.classList.contains('show') && diffX > 30) {
-                sidebar.classList.remove('show');
-            }
+          const edgeThreshold = 40;
+          const isFromRightEdge = startX > window.innerWidth - edgeThreshold;
+          const isSidebarHidden = !sidebar.classList.contains('show');
+
+          if (isFromRightEdge && isSidebarHidden && diffX < -20) {
+            openSidebar();
+          } else if (sidebar.classList.contains('show') && diffX > 20) {
+            closeSidebar();
+          }
         }
-    }, { passive: false });
+      }, { passive: false });
 
-    // 2. زر التبديل العادي للجوال (الهامبرغر)
-    if(toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-        });
-    }
-});
-</script>
+      document.addEventListener('touchend', function() {
+        startX = 0;
+        startY = 0;
+        isSwiping = false;
+      }, { passive: true });
+
+      // ضبط الإزاحة عند تغيير حجم النافذة
+      window.addEventListener('resize', function() {
+        // في سطح المكتب نضمن إعادة حساب الإزاحة
+        if (window.innerWidth > 991) {
+          // نغلق القائمة إذا كانت مفتوحة (للتأكد)
+          sidebar.classList.remove('show');
+        }
+        setMainMargin();
+      });
+
+      // تهيئة أولية
+      setMainMargin();
+
+      // في حالة وجود تغيير في عرض القائمة بسبب المحتوى (نادر) نعيد حسابها
+      // يمكن إضافة MutationObserver إذا لزم الأمر، لكن ليس ضرورياً.
+    });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 
