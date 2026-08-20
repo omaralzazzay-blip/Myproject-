@@ -78,6 +78,8 @@ def _collect(period, ref, project_id=None, phase_id=None):
 
 # باقي الدوال (reports_home, worker_report, supervisor_report, material_report, damaged_report, financial_report) تبقى كما هي
 # ... (احتفظ بها من ملفك الحالي، لأنها لم تتغير)
+@reports_bp.route('/reports')
+@require_roles('admin', 'supervisor')
 def reports_home():
     period = request.args.get('period') or 'monthly'
     ref = request.args.get('ref') or date.today().isoformat()
@@ -110,7 +112,6 @@ def reports_home():
         rows_w = db_query(wsql, wparams)
         for r in rows_w:
             r['gross'] = num(r['wage_per_day']) * num(r['rate']) * num(r['days'])
-            # تعديل: استبدال INTERVAL بـ datetime مع إضافة end مرتين
             ded = num(db_query(
                 """SELECT COALESCE(SUM(d.amount*d2.rate_to_local),0) t FROM worker_deductions d
                    JOIN currencies d2 ON d2.id=d.currency_id
@@ -143,8 +144,6 @@ def reports_home():
                            period_name=PERIODS.get(period, ''),
                            project_id=project_id, phase_id=phase_id, projects=projects, phases=phases,
                            data=data, workers_report=workers_report, balances=balances)
-
-
 # ---------------- كشف حساب العامل ----------------
 @reports_bp.route('/reports/worker')
 @require_roles('admin', 'supervisor')
