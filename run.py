@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""ملف التشغيل: python run.py"""
+"""ملف التشغيل المحلي: python run.py"""
 from app import app
+from config import HOST, PORT, DEBUG
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=DEBUG, host=HOST, port=PORT)

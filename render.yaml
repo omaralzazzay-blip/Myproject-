@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: construction-management-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /health
+    disk:
+      name: cms-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_DATA_DIR
+        value: /var/data
+      - key: DB_PATH
+        value: /var/data/schema.db
+      - key: UPLOAD_FOLDER
+        value: /var/data/uploads

@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 نظام إدارة المشاريع الإنشائية المتكامل
-Flask + MySQL (XAMPP) - نقطة الانطلاق الرئيسية
+Flask + SQLite - نقطة الانطلاق الرئيسية
 """
-import os
 from datetime import date
 
-from flask import Flask, g, session
+from flask import Flask, g
 
 import db
-from auth import auth_bp, is_admin, scope_project_id, current_user
+from auth import auth_bp, is_admin, scope_project_id
+from config import SECRET_KEY, UPLOAD_FOLDER, HOST, PORT, DEBUG, bootstrap_runtime
+
+bootstrap_runtime()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'construction-management-secret-key-2026')
+app.secret_key = SECRET_KEY
 app.config['JSON_AS_ASCII'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 from dashboard import dashboard_bp
 from projects import projects_bp
@@ -42,6 +43,14 @@ app.register_blueprint(issues_bp)
 app.register_blueprint(accounts_bp)
 app.register_blueprint(reports_bp)
 app.register_blueprint(notifications_bp)
+
+
+@app.get('/health')
+def healthcheck():
+    return {
+        'status': 'ok',
+        'app': 'construction-management-system'
+    }, 200
 
 
 # ---------------- سياق عام للقوالب ----------------
@@ -71,4 +80,4 @@ def money_filter(v):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=DEBUG, host=HOST, port=PORT)
