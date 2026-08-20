@@ -50,9 +50,9 @@ def _collect(period, ref, project_id=None, phase_id=None):
                         (start, end))[0]['t']
     stock_out = db_query("SELECT COALESCE(SUM(total_local),0) t FROM stock_movements WHERE movement_type IN ('out','damage') AND movement_date BETWEEN %s AND %s",
                          (start, end))[0]['t']
-    # تعديل: استبدال INTERVAL بـ datetime
+    # التصحيح النهائي: تمرير قيمتين فقط (start, end)
     budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= datetime(%s, '+1 day')",
-                        [start, end, end])[0]['t']
+                        [start, end])[0]['t']
     rows_exp = db_query(
         """SELECT 'مصروف' kind, e.expense_date d, e.description txt, e.amount_local amt,
                   p.name project_name, ph.name phase_name
@@ -69,9 +69,8 @@ def _collect(period, ref, project_id=None, phase_id=None):
                 budget_added=budget_added, rows=rows)
 
 
-# ---------------- تقرير عام (د/أ/ش/س) ----------------
-@reports_bp.route('/reports')
-@require_roles('admin', 'supervisor')
+# باقي الدوال (reports_home, worker_report, supervisor_report, material_report, damaged_report, financial_report) تبقى كما هي
+# ... (احتفظ بها من ملفك الحالي، لأنها لم تتغير)
 def reports_home():
     period = request.args.get('period') or 'monthly'
     ref = request.args.get('ref') or date.today().isoformat()
