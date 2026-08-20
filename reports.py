@@ -51,8 +51,7 @@ def _collect(period, ref, project_id=None, phase_id=None):
                         (start, end))[0]['t']
     stock_out = db_query("SELECT COALESCE(SUM(total_local),0) t FROM stock_movements WHERE movement_type IN ('out','damage') AND movement_date BETWEEN %s AND %s",
                          (start, end))[0]['t']
-    budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= %s + INTERVAL 1 DAY",
-                            (start, end))[0]['t']
+   budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= ? AND created_at <= datetime(?, '+1 day')",
     rows_exp = db_query(
         """SELECT 'مصروف' kind, e.expense_date d, e.description txt, e.amount_local amt,
                   p.name project_name, ph.name phase_name
