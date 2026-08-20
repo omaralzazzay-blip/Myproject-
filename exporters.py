@@ -3,7 +3,14 @@
 import os
 import io
 import arabic_reshaper
-from bidi.algorithm import get_display
+
+# --- استبدال bidi بدالة محلية ---
+def get_display(text):
+    """إعادة تشكيل النص العربي وعكسه للعرض الصحيح (محاكاة bidi)"""
+    if text is None:
+        return ''
+    return arabic_reshaper.reshape(str(text))[::-1]
+# ---------------------------------
 
 from reportlab.lib.pagesizes import A4, landscape as rl_landscape
 from reportlab.pdfbase import pdfmetrics
@@ -35,7 +42,7 @@ def ar(t):
     """تقويم النص العربي (إعادة تشكيل + اتجاه RTL) لعرضه في PDF."""
     if t is None:
         return ''
-    return get_display(arabic_reshaper.reshape(str(t)))
+    return get_display(str(t))
 
 
 def make_pdf(title, headers, rows, landscape=False):

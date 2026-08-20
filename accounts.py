@@ -22,8 +22,15 @@ def list_accounts():
     sql = """SELECT a.*, p.name AS project_name FROM accounts a JOIN projects p ON p.id=a.project_id WHERE 1=1"""
     params = []
     if spid:
-        sql += " AND a.project_id=%s"; params.append(spid)
-    tp = request.args.get('type')
+        sql += """ ORDER BY a.project_id, 
+          CASE a.acc_type 
+              WHEN 'project' THEN 1
+              WHEN 'creditor' THEN 2
+              WHEN 'debtor' THEN 3
+              WHEN 'worker' THEN 4
+              WHEN 'supervisor' THEN 5
+              ELSE 6
+          END, a.name"""
     if tp in ACC_LABEL:
         sql += " AND a.acc_type=%s"; params.append(tp)
     sql += " ORDER BY a.project_id, FIELD(a.acc_type,'project','creditor','debtor','worker','supervisor'), a.name"

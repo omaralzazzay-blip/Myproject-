@@ -35,7 +35,6 @@ def _find_range(period, ref):
 
 def _collect(period, ref, project_id=None, phase_id=None):
     start, end = _find_range(period, ref)
-    where = " WHERE %s BETWEEN %s AND %s"
     params = [start, end]
     pwhere = " WHERE 1=1"
     pparams = []
@@ -51,7 +50,9 @@ def _collect(period, ref, project_id=None, phase_id=None):
                         (start, end))[0]['t']
     stock_out = db_query("SELECT COALESCE(SUM(total_local),0) t FROM stock_movements WHERE movement_type IN ('out','damage') AND movement_date BETWEEN %s AND %s",
                          (start, end))[0]['t']
-   budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= ? AND created_at <= datetime(?, '+1 day')",
+    # تعديل: استبدال INTERVAL بـ datetime
+    budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= datetime(?, '+1 day')",
+                            (start, end, end))[0]['t']
     rows_exp = db_query(
         """SELECT 'مصروف' kind, e.expense_date d, e.description txt, e.amount_local amt,
                   p.name project_name, ph.name phase_name
@@ -103,16 +104,17 @@ def reports_home():
         rows_w = db_query(wsql, wparams)
         for r in rows_w:
             r['gross'] = num(r['wage_per_day']) * num(r['rate']) * num(r['days'])
+            # تعديل: استبدال INTERVAL بـ datetime مع إضافة end مرتين
             ded = num(db_query(
                 """SELECT COALESCE(SUM(d.amount*d2.rate_to_local),0) t FROM worker_deductions d
                    JOIN currencies d2 ON d2.id=d.currency_id
-                   WHERE d.worker_id=%s AND d.created_at BETWEEN %s AND %s + INTERVAL 1 DAY""",
-                (r['id'], data['start'], data['end']))[0]['t'])
+                   WHERE d.worker_id=%s AND d.created_at BETWEEN %s AND datetime(?, '+1 day')""",
+                (r['id'], data['start'], data['end'], data['end']))[0]['t'])
             wd2 = num(db_query(
                 """SELECT COALESCE(SUM(x.amount*x2.rate_to_local),0) t FROM worker_withdrawals x
                    JOIN currencies x2 ON x2.id=x.currency_id
-                   WHERE x.worker_id=%s AND x.created_at BETWEEN %s AND %s + INTERVAL 1 DAY""",
-                (r['id'], data['start'], data['end']))[0]['t'])
+                   WHERE x.worker_id=%s AND x.created_at BETWEEN %s AND datetime(?, '+1 day')""",
+                (r['id'], data['start'], data['end'], data['end']))[0]['t'])
             r['ded'] = ded; r['wd'] = wd2; r['net'] = r['gross'] - ded - wd2
         workers_report = rows_w
 
