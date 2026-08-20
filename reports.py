@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """التقارير: عامة / كشوف حسابات (عامل، مشرف) / حركة مادة / تالف / مالية
    مع تصدير PDF و Excel بدعم كامل للعربية."""
+   
+from datetime import timedelta # تأكد من وجود هذا السطر في بداية الملف
+# ...
 from datetime import date, timedelta
 from io import BytesIO
 from flask import Blueprint, render_template, request, send_file
@@ -51,8 +54,12 @@ def _collect(period, ref, project_id=None, phase_id=None):
     stock_out = db_query("SELECT COALESCE(SUM(total_local),0) t FROM stock_movements WHERE movement_type IN ('out','damage') AND movement_date BETWEEN %s AND %s",
                          (start, end))[0]['t']
     # التصحيح النهائي: تمرير قيمتين فقط (start, end)
-    budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= datetime(%s, '+1 day')",
-                        [start, end])[0]['t']
+    #budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= datetime(%s, '+1 day')",
+    #[start, end])[0]['t']
+    end_plus_one = end + timedelta(days=1)
+    budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= %s",
+                        [start, end_plus_one])[0]['t']
+
     rows_exp = db_query(
         """SELECT 'مصروف' kind, e.expense_date d, e.description txt, e.amount_local amt,
                   p.name project_name, ph.name phase_name
