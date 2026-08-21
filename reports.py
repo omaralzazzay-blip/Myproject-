@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """التقارير: عامة / كشوف حسابات (عامل، مشرف) / حركة مادة / تالف / مالية
    مع تصدير PDF و Excel بدعم كامل للعربية."""
-   
-from datetime import timedelta # تأكد من وجود هذا السطر في بداية الملف
-# ...
 from datetime import date, timedelta
 from io import BytesIO
 from flask import Blueprint, render_template, request, send_file
@@ -38,6 +35,10 @@ def _find_range(period, ref):
 
 def _collect(period, ref, project_id=None, phase_id=None):
     start, end = _find_range(period, ref)
+    # إضافة يوم للنهاية للتغطية الكاملة
+    end_plus = end + timedelta(days=1)
+    
+    where = " WHERE %s BETWEEN %s AND %s"
     params = [start, end]
     pwhere = " WHERE 1=1"
     pparams = []
@@ -53,13 +54,9 @@ def _collect(period, ref, project_id=None, phase_id=None):
                         (start, end))[0]['t']
     stock_out = db_query("SELECT COALESCE(SUM(total_local),0) t FROM stock_movements WHERE movement_type IN ('out','damage') AND movement_date BETWEEN %s AND %s",
                          (start, end))[0]['t']
-    # التصحيح النهائي: تمرير قيمتين فقط (start, end)
-    #budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= datetime(%s, '+1 day')",
-    #[start, end])[0]['t']
-    end_plus_one = end + timedelta(days=1)
+    # تعديل: استخدام end_plus بدلاً من + INTERVAL في SQL
     budget_added = db_query("SELECT COALESCE(SUM(amount_local),0) t FROM budgets WHERE created_at >= %s AND created_at <= %s",
-                        [start, end_plus_one])[0]['t']
-
+                            (start, end_plus))[0]['t']
     rows_exp = db_query(
         """SELECT 'مصروف' kind, e.expense_date d, e.description txt, e.amount_local amt,
                   p.name project_name, ph.name phase_name
@@ -75,9 +72,8 @@ def _collect(period, ref, project_id=None, phase_id=None):
                 exp_detail=exp_detail, wd_detail=wd_detail, stock_in=stock_in, stock_out=stock_out,
                 budget_added=budget_added, rows=rows)
 
-
-# باقي الدوال (reports_home, worker_report, supervisor_report, material_report, damaged_report, financial_report) تبقى كما هي
-# ... (احتفظ بها من ملفك الحالي، لأنها لم تتغير)
+ 
+# ---------------- تقرير عام (د/أ/ش/س) ----------------
 @reports_bp.route('/reports')
 @require_roles('admin', 'supervisor')
 def reports_home():
@@ -110,18 +106,23 @@ def reports_home():
             wsql += " AND w.phase_id=%s"; wparams.append(phase_id)
         wsql += " ORDER BY p.name, ph.name, w.name"
         rows_w = db_query(wsql, wparams)
+        
+        # إضافة يوم للنهاية للتغطية الكاملة
+        end_plus = data['end'] + timedelta(days=1)
+        
         for r in rows_w:
             r['gross'] = num(r['wage_per_day']) * num(r['rate']) * num(r['days'])
+            # تعديل: استخدام end_plus بدلاً من + INTERVAL في SQL
             ded = num(db_query(
                 """SELECT COALESCE(SUM(d.amount*d2.rate_to_local),0) t FROM worker_deductions d
                    JOIN currencies d2 ON d2.id=d.currency_id
-                   WHERE d.worker_id=%s AND d.created_at BETWEEN %s AND datetime(?, '+1 day')""",
-                (r['id'], data['start'], data['end'], data['end']))[0]['t'])
+                   WHERE d.worker_id=%s AND d.created_at BETWEEN %s AND %s""",
+                (r['id'], data['start'], end_plus))[0]['t'])
             wd2 = num(db_query(
                 """SELECT COALESCE(SUM(x.amount*x2.rate_to_local),0) t FROM worker_withdrawals x
                    JOIN currencies x2 ON x2.id=x.currency_id
-                   WHERE x.worker_id=%s AND x.created_at BETWEEN %s AND datetime(?, '+1 day')""",
-                (r['id'], data['start'], data['end'], data['end']))[0]['t'])
+                   WHERE x.worker_id=%s AND x.created_at BETWEEN %s AND %s""",
+                (r['id'], data['start'], end_plus))[0]['t'])
             r['ded'] = ded; r['wd'] = wd2; r['net'] = r['gross'] - ded - wd2
         workers_report = rows_w
 
@@ -144,6 +145,8 @@ def reports_home():
                            period_name=PERIODS.get(period, ''),
                            project_id=project_id, phase_id=phase_id, projects=projects, phases=phases,
                            data=data, workers_report=workers_report, balances=balances)
+
+
 # ---------------- كشف حساب العامل ----------------
 @reports_bp.route('/reports/worker')
 @require_roles('admin', 'supervisor')
